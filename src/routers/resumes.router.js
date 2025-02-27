@@ -7,7 +7,6 @@ import { createResumeValidator } from "../middlewares/validators/create-resume-v
 import { updateResumeValidator } from "../middlewares/validators/update-resume-validator.middleware.js";
 import { requireRoles } from "../middlewares/requir-roles.middleware.js";
 import { USER_ROLE } from "../constants/user.constant.js";
-import { updateResumeStatusValidator } from "../middlewares/validators/update-resume-status-validator.middleware.js";
 import { ResumesController } from "../controllers/resumes.controller.js";
 
 const resumeRouter = express.Router();
@@ -39,7 +38,7 @@ resumeRouter.delete("/:resumeId", requireAccessToken, resumesController.delete);
 resumeRouter.patch(
   "/:resumeId/status",
   requireRoles([USER_ROLE.RECRUITER]),
-  updateResumeStatusValidator,
+  updateResumeValidator,
   async (req, res, next) => {
     try {
       const user = req.user;
