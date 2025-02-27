@@ -3,11 +3,11 @@ import { prisma } from "../utils/prisma.util.js";
 import { MESSAGES } from "../constants/messages.constant.js";
 import { HTTPS_STATUS } from "../constants/http.status.constant.js";
 import { requireAccessToken } from "../middlewares/require-access-token.middleware.js";
-import { createResumeValidator } from "../middlewares/vaildators/create-resume-vaildator.middleware.js";
-import { updateResumeValidator } from "../middlewares/vaildators/update-resume-vaildator.middleware.js";
+import { createResumeValidator } from "../middlewares/validators/create-resume-validator.middleware.js";
+import { updateResumeValidator } from "../middlewares/validators/update-resume-validator.middleware.js";
 import { requireRoles } from "../middlewares/requir-roles.middleware.js";
 import { USER_ROLE } from "../constants/user.constant.js";
-import { updateResumeStatusValidator } from "../middlewares/vaildators/update-resume-status-vaildator.middleware.js";
+import { updateResumeStatusValidator } from "../middlewares/validators/update-resume-status-validator.middleware.js";
 import { ResumesController } from "../controllers/resumes.controller.js";
 
 const resumeRouter = express.Router();
