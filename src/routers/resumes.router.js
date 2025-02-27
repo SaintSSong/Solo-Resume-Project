@@ -139,4 +139,4 @@ resumeRouter.get(
   }
 );
 
-export default resumeRouter;
+export { resumeRouter };

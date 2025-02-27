@@ -55,7 +55,7 @@ export class ResumesController {
 
         // 채용 담당자가 아닌 경우
       } else {
-        // 자긴이 작성한 이력서만 조회
+        // 자신이 작성한 이력서만 조회
         whereCondition.userId = userId;
       }
 

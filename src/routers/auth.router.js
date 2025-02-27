@@ -10,3 +10,5 @@ const authController = new AuthController();
 authRouter.post("/sign-up", signUpValidator, authController.signUp);
 
 authRouter.post("/sign-ip", signInValidator, authController.signIn);
+
+export { authRouter };
