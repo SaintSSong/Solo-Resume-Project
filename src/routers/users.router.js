@@ -5,6 +5,6 @@ const usersRouter = express.Router();
 const usersController = new UsersController();
 
 // requireAccessToken 넣어야한다.
-usersRouter.get("/me", req, usersController.readMe);
+usersRouter.get("/me", usersController.readMe);
 
 export { usersRouter };
