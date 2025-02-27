@@ -1,0 +1,10 @@
+import express from "express";
+import { UsersController } from "../controllers/users.controller";
+
+const usersRouter = express.Router();
+const usersController = new UsersController();
+
+// requireAccessToken 넣어야한다.
+usersRouter.get("/me", req, usersController.readMe);
+
+export { usersRouter };
