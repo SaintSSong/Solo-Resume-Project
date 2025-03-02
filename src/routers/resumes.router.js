@@ -13,7 +13,12 @@ const resumeRouter = express.Router();
 const resumesController = new ResumesController();
 
 // 이력서 생성
-resumeRouter.post("/", createResumeValidator, resumesController.create);
+resumeRouter.post(
+  "/",
+  requireAccessToken,
+  createResumeValidator,
+  resumesController.create
+);
 
 // 이력서 목록 조회
 resumeRouter.get("/", requireAccessToken, resumesController.readMany);

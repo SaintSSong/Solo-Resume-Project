@@ -31,7 +31,8 @@ export class ResumesService {
 
   update = async ({ userId, resumeId, title, content }) => {
     const existedResume = await resumesRepository.readOne({
-      where: { userId, resumeId: +resumeId },
+      userId,
+      resumeId: +resumeId,
     });
 
     if (!existedResume) {
@@ -50,7 +51,8 @@ export class ResumesService {
 
   delete = async ({ userId, resumeId }) => {
     const existedResume = await resumesRepository.readOne({
-      where: { userId, resumeId: +resumeId },
+      userId,
+      resumeId: +resumeId,
     });
 
     if (!existedResume) {
@@ -58,7 +60,8 @@ export class ResumesService {
     }
 
     const data = await resumesRepository.delete({
-      where: { userId, resumeId: +resumeId },
+      userId,
+      resumeId: +resumeId,
     });
 
     return data;

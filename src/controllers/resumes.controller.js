@@ -14,8 +14,8 @@ export class ResumesController {
 
       const data = await resumesService.create({ userId, title, content });
 
-      return res.status(HTTP_STATUS.Created).json({
-        status: HTTP_STATUS.Created,
+      return res.status(HTTP_STATUS.CREATED).json({
+        status: HTTP_STATUS.CREATED, //Created
         message: MESSAGES.RESUMES.CREATED.SUCCEED,
         data,
       });
@@ -70,7 +70,7 @@ export class ResumesController {
       next(error);
     }
   };
-
+  // 이력서 상세 조회
   readOne = async (req, res, next) => {
     try {
       const user = req.user;
@@ -97,12 +97,14 @@ export class ResumesController {
     }
   };
 
+  // 이력서 수정
   update = async (req, res, next) => {
     try {
       const { userId } = req.user;
       const { resumeId } = req.params;
       const { title, content } = req.body;
 
+      console.log("controller", userId, resumeId);
       const data = await resumesService.update({
         userId,
         resumeId,
@@ -120,6 +122,7 @@ export class ResumesController {
     }
   };
 
+  // 이력서 삭제
   delete = async (req, res, next) => {
     try {
       const { userId } = req.user;

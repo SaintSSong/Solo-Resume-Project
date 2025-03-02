@@ -9,10 +9,11 @@ export class AuthController {
     try {
       const { email, password, name } = req.body;
 
+      console.log("controller-password", password);
       const data = await authService.signUP({ email, password, name });
 
       return res
-        .status(HTTP_STATUS.Created)
+        .status(HTTP_STATUS.CREATED)
         .json({ message: MESSAGES.AUTH.SIGN_UP.SUCCEED, data });
     } catch (error) {
       next(error);

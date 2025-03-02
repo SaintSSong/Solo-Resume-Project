@@ -6,8 +6,8 @@ export const errorHandler = (err, req, res, next) => {
   // joi에서 에러가 발생했다? 여기서 처리
   // joi에서 발생한 에러 처리
   if (err.name === "ValidationError") {
-    return res.status(HTTP_STATUS.Bad_Request).json({
-      status: HTTP_STATUS.Bad_Request,
+    return res.status(HTTP_STATUS.BAD_REQUEST).json({
+      status: HTTP_STATUS.BAD_REQUEST,
       message: err.message,
     });
   }
@@ -22,8 +22,8 @@ export const errorHandler = (err, req, res, next) => {
   }
 
   // 그 밖의 예상치 못한 에러 처리
-  return res.status(HTTP_STATUS.Internal_Server_Error).json({
-    status: HTTP_STATUS.Internal_Server_Error,
+  return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+    status: HTTP_STATUS.INTERNAL_SERVER_ERROR,
     message: "예상치 못한 에러가 발생했습니다. 관리자에게 문의해 주세요.",
   });
 };

@@ -4,9 +4,10 @@ import bcrypt from "bcrypt";
 
 export class UsersRepository {
   // 유저 생성
-  create = async (email, password, name) => {
+  create = async ({ email, password, name }) => {
     // 이거 여기 넣은 이유
     // 무조건 유저 생성시에 HASH 처리를 하게 할려고
+    console.log("password", password);
     const hashPassword = bcrypt.hashSync(password, HASH_SALT_ROUNDS);
 
     const data = await prisma.user.create({

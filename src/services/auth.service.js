@@ -20,6 +20,7 @@ export class AuthService {
   signUP = async ({ email, password, name }) => {
     const existedUser = await usersRepository.readOneByEmail(email);
 
+    console.log("service- password", password);
     if (existedUser) {
       throw new HttpError.Conflict(MESSAGES.AUTH.COMMON.EMAIL.DUPLICATED);
     }
@@ -54,22 +55,13 @@ export class AuthService {
 const generateAuthTokens = async (payload) => {
   const userId = payload.userId;
 
-  //console.log("generateAuthTokens_userId", userId);
-
   const accessToken = jwt.sign(payload, ACCESS_TOKEN_SECRET, {
     expiresIn: ACCESS_TOKEN_EXPIRED_IN,
   });
 
-  // console.log("accessToken", accessToken);
-
   const refreshToken = jwt.sign(payload, REFRESH_TOKEN_SECRET, {
     expiresIn: REFRESH_TOKEN_EXPIRED_IN,
   });
-
-  // console.log("REFRESH_TOKEN_EXPIRED_IN", REFRESH_TOKEN_EXPIRED_IN);
-  // // 암호화를 또 해야해나?
-
-  // console.log("refreshToken", refreshToken);
 
   const hashedRefreshToken = bcrypt.hashSync(refreshToken, HASH_SALT_ROUNDS);
 
