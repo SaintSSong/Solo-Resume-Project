@@ -1,4 +1,4 @@
-import { prisma } from "../utils/prisma.util";
+import { prisma } from "../utils/prisma.util.js";
 
 export class ResumesRepository {
   create = async ({ userId, title, content }) => {
@@ -81,6 +81,7 @@ export class ResumesRepository {
 
     return data;
   };
+
   delete = async ({ userId, resumeId }) => {
     const data = await prisma.resume.delete({
       where: { userId, resumeId: +resumeId },

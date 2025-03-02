@@ -1,5 +1,5 @@
-import { HTTP_STATUS } from "../constant/http-status.constant.js";
-import { MESSAGES } from "../constant/messages.constant.js";
+import { HTTP_STATUS } from "../constants/http-status.constant.js";
+import { MESSAGES } from "../constants/messages.constant.js";
 
 export class UsersController {
   // 내 정보 조회

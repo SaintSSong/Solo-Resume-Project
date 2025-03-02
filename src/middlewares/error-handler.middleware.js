@@ -1,4 +1,4 @@
-import { HTTP_STATUS } from "../constant/http-status.constant.js";
+import { HTTP_STATUS } from "../constants/http-status.constant.js";
 
 export const errorHandler = (err, req, res, next) => {
   console.error(err);

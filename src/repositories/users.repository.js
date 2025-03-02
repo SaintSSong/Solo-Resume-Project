@@ -1,6 +1,6 @@
-import { HASH_SALT_ROUNDS } from "../constant/auth.constant.js";
+import { HASH_SALT_ROUNDS } from "../constants/auth.constant.js";
 import { prisma } from "../utils/prisma.util.js";
-import { bcrypt } from "bcrypt";
+import bcrypt from "bcrypt";
 
 export class UsersRepository {
   // 유저 생성

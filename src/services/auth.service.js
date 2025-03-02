@@ -2,15 +2,15 @@ import {
   ACCESS_TOKEN_EXPIRED_IN,
   HASH_SALT_ROUNDS,
   REFRESH_TOKEN_EXPIRED_IN,
-} from "../constant/auth.constant.js";
+} from "../constants/auth.constant.js";
 import {
   ACCESS_TOKEN_SECRET,
   REFRESH_TOKEN_SECRET,
-} from "../constant/env.constant.js";
-import { MESSAGES } from "../constant/messages.constant.js";
+} from "../constants/env.constant.js";
+import { MESSAGES } from "../constants/messages.constant.js";
 import { HttpError } from "../errors/http.error.js";
-import { bcrypt } from "bcrypt";
-import { jwt } from "jsonwebtoken";
+import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
 import { prisma } from "../utils/prisma.util.js";
 import { UsersRepository } from "../repositories/users.repository.js";
 

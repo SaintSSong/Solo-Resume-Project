@@ -1,6 +1,6 @@
-import { MESSAGES } from "../constant/messages.constant";
-import { HttpError } from "../errors/http.error";
-import { ResumesRepository } from "../repositories/resumes.repository";
+import { MESSAGES } from "../constants/messages.constant.js";
+import { HttpError } from "../errors/http.error.js";
+import { ResumesRepository } from "../repositories/resumes.repository.js";
 
 const resumesRepository = new ResumesRepository();
 

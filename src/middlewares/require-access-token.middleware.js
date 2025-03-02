@@ -1,5 +1,5 @@
 import { ACCESS_TOKEN_SECRET } from "../constants/env.constant.js";
-import { HTTPS_STATUS } from "../constants/http.status.constant.js";
+import { HTTP_STATUS } from "../constants/http-status.constant.js";
 import { MESSAGES } from "../constants/messages.constant.js";
 import { UsersRepository } from "../repositories/users.repository.js";
 import jwt from "jsonwebtoken";
@@ -13,8 +13,8 @@ export const requireAccessToken = async (req, res, next) => {
 
     // authorization이 없는 경우
     if (!authorization) {
-      return res.status(HTTPS_STATUS.Unauthorized).json({
-        status: HTTPS_STATUS.Unauthorized,
+      return res.status(HTTP_STATUS.Unauthorized).json({
+        status: HTTP_STATUS.Unauthorized,
         message: MESSAGES.AUTH.COMMON.JWT.NO_TOKEN,
       });
     }
@@ -22,16 +22,16 @@ export const requireAccessToken = async (req, res, next) => {
     const [type, accessToken] = authorization.split(" ");
 
     if (type !== "Bearer") {
-      return res.status(HTTPS_STATUS.Unauthorized).json({
-        status: HTTPS_STATUS.Unauthorized,
+      return res.status(HTTP_STATUS.Unauthorized).json({
+        status: HTTP_STATUS.Unauthorized,
         message: MESSAGES.AUTH.COMMON.JWT.NOT_SUPPORTED_TYPE,
       });
     }
 
     // AccessToken이 없는 경우 ( {{ AccessToken }} <- 이런 거)
     if (!accessToken) {
-      return res.status(HTTPS_STATUS.Unauthorized).json({
-        status: HTTPS_STATUS.Unauthorized,
+      return res.status(HTTP_STATUS.Unauthorized).json({
+        status: HTTP_STATUS.Unauthorized,
         message: MESSAGES.AUTH.COMMON.JWT.NO_TOKEN,
       });
     }
@@ -44,16 +44,16 @@ export const requireAccessToken = async (req, res, next) => {
     } catch (error) {
       // AccessToken의 유효기한이 지난 경우
       if (error.name === "TokenExpiredError") {
-        return res.status(HTTPS_STATUS.Unauthorized).json({
-          status: HTTPS_STATUS.Unauthorized,
+        return res.status(HTTP_STATUS.Unauthorized).json({
+          status: HTTP_STATUS.Unauthorized,
           message: MESSAGES.AUTH.COMMON.JWT.EXPIRED,
         });
       }
 
       // 그 밖의 AccessToken 검증에 실패한 경우
       else {
-        return res.status(HTTPS_STATUS.Unauthorized).json({
-          status: HTTPS_STATUS.Unauthorized,
+        return res.status(HTTP_STATUS.Unauthorized).json({
+          status: HTTP_STATUS.Unauthorized,
           message: MESSAGES.AUTH.COMMON.JWT.INVALID,
         });
       }
@@ -70,8 +70,8 @@ export const requireAccessToken = async (req, res, next) => {
     const user = await usersRepository.readOneById(userId);
 
     if (!user) {
-      return res.status(HTTPS_STATUS.Unauthorized).json({
-        status: HTTPS_STATUS.Unauthorized,
+      return res.status(HTTP_STATUS.Unauthorized).json({
+        status: HTTP_STATUS.Unauthorized,
         message: MESSAGES.AUTH.COMMON.JWT.NO_USER,
       });
     }

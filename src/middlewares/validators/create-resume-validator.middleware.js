@@ -1,6 +1,6 @@
 import Joi from "joi";
-import { MIN_RESUME_LENGTH } from "../../constant/resume.constant.js";
-import { MESSAGES } from "../../constant/messages.constant.js";
+import { MIN_RESUME_LENGTH } from "../../constants/resume.constant.js";
+import { MESSAGES } from "../../constants/messages.constant.js";
 
 const schema = Joi.object({
   title: Joi.string().required().messages({

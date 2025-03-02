@@ -1,7 +1,7 @@
-import { HTTP_STATUS } from "../constant/http-status.constant";
-import { MESSAGES } from "../constant/messages.constant";
-import { USER_ROLE } from "../constant/user.constant";
-import { ResumesService } from "../services/resumes.service";
+import { HTTP_STATUS } from "../constants/http-status.constant.js";
+import { MESSAGES } from "../constants/messages.constant.js";
+import { USER_ROLE } from "../constants/user.constant.js";
+import { ResumesService } from "../services/resumes.service.js";
 
 const resumesService = new ResumesService();
 
