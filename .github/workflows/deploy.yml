@@ -55,6 +55,7 @@ jobs:
             mv /home/ubuntu/Solo-Resume-Project/tobe/project.tar.gz /home/ubuntu/Solo-Resume-Project/current/project.tar.gz
             cd /home/ubuntu/Solo-Resume-Project/current
             tar -xvf project.tar.gz
-            yarn install --frozen-lockfile  
+            yarn install --frozen-lockfile
+            yarn prisma generate  
             pm2 kill
             pm2 start src/app.js --name "backend-server"
