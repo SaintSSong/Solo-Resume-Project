@@ -13,8 +13,6 @@ app.use(express.json());
 // express에서 url링크를 읽을 수있도록 허용
 app.use(express.urlencoded({ extended: true }));
 
-console.log("여기는 들어오나?");
-
 // 서버가 건강하게 살아있는지 확인하는 get 함수
 app.get("/health-check", (req, res) => {
   // throw new Error("예상치 못한 에러"); <- errorHandler 실험용 check 완료
