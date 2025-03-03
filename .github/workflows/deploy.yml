@@ -31,7 +31,7 @@ jobs:
       #     run: npm run build
 
       - name: 압축하기
-        run: tar -czvf project.tar.gz .env package.json yarn.lock node_modules src
+        run: tar -czvf project.tar.gz .env package.json yarn.lock src
 
       - name: SCP로 EC2에 빌드된 파일 전송하기
         uses: appleboy/scp-action@v0.1.7
@@ -55,6 +55,6 @@ jobs:
             mv /home/ubuntu/Solo-Resume-Project/tobe/project.tar.gz /home/ubuntu/Solo-Resume-Project/current/project.tar.gz
             cd /home/ubuntu/Solo-Resume-Project/current
             tar -xvf project.tar.gz
-            yarn install
+            yarn install --frozen-lockfile  
             pm2 kill
             pm2 start src/app.js --name "backend-server"
