@@ -1,0 +1,60 @@
+name: Deploy To EC2
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Github Repository 파일 불러오기
+        uses: actions/checkout@v4
+
+      - name: Node 설치
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: 의존성(라이브러리) 설치
+        run: yarn install --frozen-lockfile
+
+      - name: .env 파일 만들기
+        run: |
+          echo '${{secrets.ENV}}' > .env
+
+      #   - name: 테스트 코드 실행
+      #     run: npm run test
+
+      #   - name: 빌드
+      #     run: npm run build
+
+      - name: 압축하기
+        run: tar -czvf project.tar.gz .env package.json package-lock.json
+
+      - name: SCP로 EC2에 빌드된 파일 전송하기
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_PRIVATE_KEY }}
+          source: project.tar.gz
+          target: /home/ubuntu/Solo-Resume-Project/tobe
+
+      - name: SSH로 EC2에 접속하기
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }} # EC2의 퍼블릭 IPv4 주소 = 고정 주소를 말함. 연결 된 상태의 43.202.xxx.xxx <- 이런거
+          username: ${{ secrets.EC2_USERNAME }} # EC2 접속 username = 대부분 우분투투
+          key: ${{ secrets.EC2_PRIVATE_KEY }} # EC2의 key-pair 파일의 내부 텍스트
+          script_stop: true
+          script: |
+            rm -rf /home/ubuntu/Solo-Resume-Project/current
+            mkdir /home/ubuntu/Solo-Resume-Project/current
+            mv /home/ubuntu/Solo-Resume-Project/tobe/project.tar.gz /home/ubuntu/Solo-Resume-Project/current/project.tar.gz
+            cd /home/ubuntu/Solo-Resume-Project/current
+            tar -xvf project.tar.gz
+            yarn install
+            pm2 kill
+            pm2 start src/app.js --name "backend-server"
