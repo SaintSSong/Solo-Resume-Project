@@ -1,5 +1,6 @@
 import { MESSAGES } from "../constants/messages.constant.js";
 import { HttpError } from "../errors/http.error.js";
+import { prisma } from "../utils/prisma.util.js";
 import { ResumesRepository } from "../repositories/resumes.repository.js";
 
 const resumesRepository = new ResumesRepository();
@@ -62,6 +63,79 @@ export class ResumesService {
     const data = await resumesRepository.delete({
       userId,
       resumeId: +resumeId,
+    });
+
+    return data;
+  };
+
+  patch = async ({ recruiterId, resumeId, status, reason }) => {
+    const result = await prisma.$transaction(async (tx) => {
+      // 이력서 정보 조회 트랜잭션
+      const existedResume = await tx.resume.findResumeByIdWithTx({
+        resumeId: +resumeId,
+        tx,
+      });
+
+      // 이력서 정보가 없는 경우
+      if (!existedResume) {
+        throw new HttpError.NotFound(MESSAGES.RESUMES.COMMON.NOT_FOUND);
+      }
+
+      // 이력서 지원 상태  수정
+      const updatedResume = await tx.resume.updateResumeStatusWithTx({
+        resumeId: +resumeId,
+        status,
+        tx,
+      });
+
+      // 이력서 로그 수정
+      // 이거 왜 createResumeLogWithTx 에서 {}를 뺐어야 했나?
+      // 답 : existedResume.status, / updatedResume.status, 는 컨트롤러에서 넘어온 구조분해할당
+      // 즉 {resumeId : 1} 이런 형태가 아니라 트랜잭션 내부에서 생성되는 값 즉 "1" 이런 형태여서 {}가 붙으면 안됨
+      // 나머지는 전부 {a:b} 형태인데 중간에 섞여있기 때문에 그럼
+
+      // 이거 블로그에 남기자. GPT꺼도 같이
+      // 그 외에도 다른 방법도 남기자.
+      const data = await tx.resumeLog.createResumeLogWithTx(
+        recruiterId,
+        resumeId,
+        existedResume.status,
+        updatedResume.status,
+        reason,
+        tx
+      );
+
+      // 아니면 아래와 같은 방법으로 만들어도 된다.
+      // const data = await tx.resumeLog.createResumeLogWithTx({
+      //   recruiterId,
+      //   resumeId,
+      //   oldStatus: existedResume.status, // ✅ 순서와 상관없이 정확한 값 전달 가능
+      //   newStatus: updatedResume.status, // ✅ 순서와 상관없이 정확한 값 전달 가능
+      //   reason,
+      //   tx
+      // });
+
+      // 트랜잭션의 끝
+      return data;
+    });
+
+    return result;
+  };
+
+  ResumeLogGet = async (resumeId) => {
+    const findResumeLogsByResumeId =
+      await resumesRepository.findResumeLogsByResumeId(resumeId);
+
+    let data = findResumeLogsByResumeId.map((log) => {
+      return {
+        Id: log.id,
+        recruiterName: log.recruiter.name,
+        resumeId: log.resumeId,
+        oldStatus: log.oldStatus,
+        newStatus: log.newStatus,
+        reason: log.reason,
+        createdAt: log.createdAt,
+      };
     });
 
     return data;

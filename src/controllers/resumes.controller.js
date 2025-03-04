@@ -139,4 +139,48 @@ export class ResumesController {
       next(error);
     }
   };
+
+  // 이력서 지원 상태 수정
+  RecruiterResumePatch = async (req, res, next) => {
+    try {
+      const user = req.user;
+      const recruiterId = user.userId;
+      const { resumeId } = req.params;
+
+      const { status, reason } = req.body;
+
+      // 트랜잭션
+      const data = await resumesService.patch({
+        recruiterId,
+        resumeId,
+        status,
+        reason,
+      });
+
+      return res.status(HTTP_STATUS.OK).json({
+        status: HTTP_STATUS.OK,
+        message: MESSAGES.RESUMES.UPDATE.STATUS.SUCCEED,
+        date: data,
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  // 이력서 로그 목록 조회
+  ResumeLogGet = async (req, res, next) => {
+    try {
+      const { resumeId } = req.params;
+
+      const data = await resumesService.ResumeLogGet(resumeId);
+
+      return res.status(HTTP_STATUS.OK).json({
+        status: HTTP_STATUS.OK,
+        message: MESSAGES.RESUMES.READ_LIST.LOG.SUCCEED,
+        date: data,
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
 }

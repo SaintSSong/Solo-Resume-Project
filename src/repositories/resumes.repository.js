@@ -75,7 +75,6 @@ export class ResumesRepository {
   };
 
   update = async ({ userId, resumeId, title, content }) => {
-    console.log("222", userId, resumeId);
     const data = await prisma.resume.update({
       where: { userId, resumeId: +resumeId },
       data: { ...(title && { title }), ...(content && { content }) },
@@ -87,6 +86,50 @@ export class ResumesRepository {
   delete = async ({ userId, resumeId }) => {
     const data = await prisma.resume.delete({
       where: { userId, resumeId: +resumeId },
+    });
+
+    return data;
+  };
+
+  findResumeByIdWithTx = async ({ resumeId, tx }) => {
+    const data = await tx.resume.findUnique({
+      where: { resumeId },
+    });
+
+    return data;
+  };
+
+  updateResumeStatusWithTx = async ({ resumeId, status, tx }) => {
+    const data = await tx.resume.update({
+      where: { resumeId },
+      data: { status },
+    });
+
+    return data;
+  };
+
+  createResumeLogWithTx = async ({
+    recruiterId,
+    resumeId,
+    oldStatus,
+    newStatus,
+    reason,
+    tx,
+  }) => {
+    const data = await tx.resumeLog.create({
+      data: { recruiterId, resumeId, oldStatus, newStatus, reason },
+    });
+
+    return data;
+  };
+
+  findResumeLogsByResumeId = async (resumeId) => {
+    let data = await prisma.resumeLog.findMany({
+      where: { resumeId: +resumeId },
+      orderBy: {
+        createdAt: "desc",
+      },
+      include: { recruiter: true },
     });
 
     return data;
