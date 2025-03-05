@@ -11,7 +11,6 @@ import { MESSAGES } from "../constants/messages.constant.js";
 import { HttpError } from "../errors/http.error.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-import { prisma } from "../utils/prisma.util.js";
 import { UsersRepository } from "../repositories/users.repository.js";
 
 const usersRepository = new UsersRepository();
@@ -20,7 +19,6 @@ export class AuthService {
   signUP = async ({ email, password, name }) => {
     const existedUser = await usersRepository.readOneByEmail(email);
 
-    console.log("service- password", password);
     if (existedUser) {
       throw new HttpError.Conflict(MESSAGES.AUTH.COMMON.EMAIL.DUPLICATED);
     }
@@ -49,6 +47,22 @@ export class AuthService {
 
     return { data };
   };
+
+  // 토큰 재발급
+  token = async ({ userId, refreshToken }) => {
+    const userToken = await usersRepository.findRefreshTokenByUserId(userId);
+
+    const isValid =
+      userToken && bcrypt.compareSync(refreshToken, userToken.refreshToken);
+
+    if (!isValid) {
+      throw new HttpError.Unauthorized(MESSAGES.AUTH.COMMON.Unauthorized);
+    }
+
+    const data = await generateAuthTokens({ userId });
+
+    return data;
+  };
 }
 
 // AccessToken / RefreshToken 생성을 위한 함수
@@ -65,21 +79,9 @@ const generateAuthTokens = async (payload) => {
 
   const hashedRefreshToken = bcrypt.hashSync(refreshToken, HASH_SALT_ROUNDS);
 
-  //========================
-  /**
-   * 그냥 내 생각이야
-   * 서비스에서는 prisma를 쓰면 안돼
-   * 그러면 어짜피 이렇게 된거
-   * await prisma.refreshToken.upsert({ 이 녀석도
-   * userRepository로 넣어서 하나 만들고 return 시키자.
-   * 그걸 data라고 하고
-   * return도 {data라고 하면 되잖아.}
-   */
-
-  await prisma.refreshToken.upsert({
-    where: { userId },
-    update: { refreshToken: hashedRefreshToken },
-    create: { userId, refreshToken: hashedRefreshToken },
+  await usersRepository.tokenUpsert({
+    userId,
+    hashedRefreshToken,
   });
 
   return { accessToken, refreshToken };

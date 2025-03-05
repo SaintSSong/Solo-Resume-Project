@@ -9,7 +9,6 @@ export class AuthController {
     try {
       const { email, password, name } = req.body;
 
-      console.log("controller-password", password);
       const data = await authService.signUP({ email, password, name });
 
       return res
@@ -28,6 +27,26 @@ export class AuthController {
 
       return res.status(HTTP_STATUS.OK).json({
         message: MESSAGES.AUTH.SIGN_IN.SUCCEED,
+        data: data,
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  // 토큰 재발급
+  token = async (req, res, next) => {
+    try {
+      const user = req.user;
+
+      const payload = { userId: user.userId };
+
+      const refreshToken = user.refreshToken;
+
+      const data = await authService.token({ payload, refreshToken });
+
+      return res.status(HTTP_STATUS.OK).json({
+        message: MESSAGES.AUTH.TOKEN.SUCCEED,
         data: data,
       });
     } catch (error) {

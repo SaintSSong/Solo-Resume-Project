@@ -2,8 +2,10 @@ import { MESSAGES } from "../constants/messages.constant.js";
 import { HttpError } from "../errors/http.error.js";
 import { prisma } from "../utils/prisma.util.js";
 import { ResumesRepository } from "../repositories/resumes.repository.js";
+import { ResumeLogsRepository } from "../repositories/resumeLogs.repository.js";
 
 const resumesRepository = new ResumesRepository();
+const resumeLogsRepository = new ResumeLogsRepository();
 
 export class ResumesService {
   create = async ({ userId, title, content }) => {
@@ -124,7 +126,7 @@ export class ResumesService {
 
   ResumeLogGet = async (resumeId) => {
     const findResumeLogsByResumeId =
-      await resumesRepository.findResumeLogsByResumeId(resumeId);
+      await resumeLogsRepository.findResumeLogsByResumeId(resumeId);
 
     let data = findResumeLogsByResumeId.map((log) => {
       return {

@@ -7,7 +7,6 @@ export class UsersRepository {
   create = async ({ email, password, name }) => {
     // 이거 여기 넣은 이유
     // 무조건 유저 생성시에 HASH 처리를 하게 할려고
-    console.log("password", password);
     const hashPassword = bcrypt.hashSync(password, HASH_SALT_ROUNDS);
 
     const data = await prisma.user.create({
@@ -35,14 +34,15 @@ export class UsersRepository {
   };
 
   // AccessToken / RefreshToken 생성을 위한 함수에 필요한
-  // upsert를 위한 공간
-  /**
-   *
-   *
-   *
-   *
-   *
-   */
+  tokenUpsert = async ({ userId, hashedRefreshToken }) => {
+    const data = await prisma.refreshToken.upsert({
+      where: { userId },
+      update: { refreshToken: hashedRefreshToken },
+      create: { userId, refreshToken: hashedRefreshToken },
+    });
+
+    return data;
+  };
 
   readOneById = async (userId) => {
     const data = await prisma.user.findUnique({
