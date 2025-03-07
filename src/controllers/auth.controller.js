@@ -47,7 +47,7 @@ export class AuthController {
 
       const data = await authService.token({ userId: payload });
 
-      console.log("토큰 재발급", data);
+      console.log("토큰 재발급", data.accessToken);
 
       return res.status(HTTP_STATUS.OK).json({
         message: MESSAGES.AUTH.TOKEN.SUCCEED,

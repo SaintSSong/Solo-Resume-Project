@@ -41,7 +41,7 @@ export class AuthService {
       existedUser && bcrypt.compareSync(password, existedUser.password);
 
     if (!isPasswordMatched) {
-      throw new HttpError.Unauthorized(MESSAGES.AUTH.COMMON.Unauthorized);
+      throw new HttpError.UNAUTHORIZED(MESSAGES.AUTH.COMMON.UNAUTHORIZED);
     }
 
     const payload = { userId: existedUser.userId };
@@ -55,16 +55,7 @@ export class AuthService {
 
   // 토큰 재발급
   token = async ({ userId }) => {
-    console.log("token-userId", userId);
     const userToken = await usersRepository.readOneById(userId);
-    console.log("token-userToken", userToken);
-
-    // const isValid =
-    //   userToken && bcrypt.compareSync(refreshToken, userToken.refreshToken);
-
-    // if (!isValid) {
-    //   throw new HttpError.Unauthorized(MESSAGES.AUTH.COMMON.Unauthorized);
-    // }
 
     const payload = { userId: userToken.userId };
     const data = await generateAuthTokens({ payload });
@@ -83,6 +74,13 @@ export class AuthService {
 const generateAuthTokens = async ({ payload }) => {
   const userId = payload.userId;
 
+  // 새로 추가
+  // ✅ 기존 refreshToken을 가져와서 삭제
+  console.log("userId11", userId);
+  await refreshTokenRepository.deleteByUserId(userId);
+
+  console.log("deleteByUserId1 / 완료");
+
   const accessToken = jwt.sign(payload, ACCESS_TOKEN_SECRET, {
     expiresIn: ACCESS_TOKEN_EXPIRED_IN,
   });
@@ -93,10 +91,25 @@ const generateAuthTokens = async ({ payload }) => {
 
   const hashedRefreshToken = bcrypt.hashSync(refreshToken, HASH_SALT_ROUNDS);
 
+  //===========================================================
+  // ✅ 최신 refreshToken이 기존 것과 다를 때만 저장
+  const existedRefreshToken = await refreshTokenRepository.readOneById({
+    userId,
+  });
+
+  if (existedRefreshToken?.refreshToken) {
+    console.log("🚨 [ERROR] 기존 refreshToken이 폐기되지 않음! 강제 삭제!");
+    await refreshTokenRepository.deleteByUserId(userId);
+  }
+
+  //===========================================================
   await usersRepository.tokenUpsert({
     userId,
     hashedRefreshToken,
   });
+
+  console.log("accessToken", accessToken);
+  console.log("refreshToken", refreshToken);
 
   return { accessToken, refreshToken };
 };

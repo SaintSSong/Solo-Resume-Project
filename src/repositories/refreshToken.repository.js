@@ -1,10 +1,9 @@
 import { prisma } from "../utils/prisma.util.js";
 
 export class RefreshTokenRepository {
-  readOneById = async (userId) => {
-    const data = await prisma.user.findUnique({
+  readOneById = async ({ userId }) => {
+    const data = await prisma.refreshToken.findUnique({
       where: { userId: +userId },
-      omit: { password: true },
     });
 
     return data;
@@ -12,7 +11,7 @@ export class RefreshTokenRepository {
 
   // 로그아웃 시 사용
   update = async ({ userId }) => {
-    const data = await prisma.refreshToken.update({
+    await prisma.refreshToken.update({
       where: {
         userId,
       },
@@ -20,5 +19,14 @@ export class RefreshTokenRepository {
     });
 
     return { userId };
+  };
+
+  deleteByUserId = async (userId) => {
+    console.log("userId22", userId);
+    const result = await prisma.refreshToken.deleteMany({
+      where: { userId },
+    });
+    console.log("deleteByUserId2 / 완료");
+    console.log(`🔍 [DEBUG] Deleted refreshTokens:`, result);
   };
 }

@@ -7,8 +7,8 @@ class BadRequest {
   }
 }
 
-class Unauthorized {
-  constructor(message = Unauthorized.name) {
+class UNAUTHORIZED {
+  constructor(message = UNAUTHORIZED.name) {
     this.message = message;
     this.status = HTTP_STATUS.UNAUTHORIZED;
   }
@@ -44,7 +44,7 @@ class InternalServerError {
 
 export const HttpError = {
   BadRequest,
-  Unauthorized,
+  UNAUTHORIZED,
   Forbidden,
   NotFound,
   Conflict,

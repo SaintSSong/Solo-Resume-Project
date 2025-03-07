@@ -1,5 +1,5 @@
 import { REFRESH_TOKEN_SECRET } from "../constants/env.constant.js";
-import { HTTPS_STATUS } from "../constants/http.status.constant.js";
+import { HTTP_STATUS } from "../constants/http-status.constant.js";
 import { MESSAGES } from "../constants/messages.constant.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
@@ -16,25 +16,26 @@ export const requireRefreshToken = async (req, res, next) => {
 
     // authorization이 없는 경우
     if (!authorization) {
-      return res.status(HTTPS_STATUS.Unauthorized).json({
-        status: HTTPS_STATUS.Unauthorized,
+      return res.status(HTTP_STATUS.UNAUTHORIZED).json({
+        status: HTTP_STATUS.UNAUTHORIZED,
         message: MESSAGES.AUTH.COMMON.JWT.NO_TOKEN,
       });
     }
+
     // JWT 표준 인증 형태와 일치하지 않는 경우 (Authorization: Bearer {{ refreshToken }} <- 이런거)
     const [type, refreshToken] = authorization.split(" ");
 
     if (type !== "Bearer") {
-      return res.status(HTTPS_STATUS.Unauthorized).json({
-        status: HTTPS_STATUS.Unauthorized,
+      return res.status(HTTP_STATUS.UNAUTHORIZED).json({
+        status: HTTP_STATUS.UNAUTHORIZED,
         message: MESSAGES.AUTH.COMMON.JWT.NOT_SUPPORTED_TYPE,
       });
     }
 
     // refreshToken이 없는 경우 ( {{ refreshToken }} <- 이런 거)
     if (!refreshToken) {
-      return res.status(HTTPS_STATUS.Unauthorized).json({
-        status: HTTPS_STATUS.Unauthorized,
+      return res.status(HTTP_STATUS.UNAUTHORIZED).json({
+        status: HTTP_STATUS.UNAUTHORIZED,
         message: MESSAGES.AUTH.COMMON.JWT.NO_TOKEN,
       });
     }
@@ -47,16 +48,16 @@ export const requireRefreshToken = async (req, res, next) => {
     } catch (error) {
       // refreshToken의 유효기한이 지난 경우
       if (error.name === "TokenExpiredError") {
-        return res.status(HTTPS_STATUS.Unauthorized).json({
-          status: HTTPS_STATUS.Unauthorized,
+        return res.status(HTTP_STATUS.UNAUTHORIZED).json({
+          status: HTTP_STATUS.UNAUTHORIZED,
           message: MESSAGES.AUTH.COMMON.JWT.EXPIRED,
         });
       }
 
       // 그 밖의 refreshToken 검증에 실패한 경우
       else {
-        return res.status(HTTPS_STATUS.Unauthorized).json({
-          status: HTTPS_STATUS.Unauthorized,
+        return res.status(HTTP_STATUS.UNAUTHORIZED).json({
+          status: HTTP_STATUS.UNAUTHORIZED,
           message: MESSAGES.AUTH.COMMON.JWT.INVALID,
         });
       }
@@ -70,11 +71,9 @@ export const requireRefreshToken = async (req, res, next) => {
     // Payload에 담긴 사용자 ID와 일치하는 사용자가 없는 경우 (DB에 없는 경우, 탈퇴 등)
     const { userId } = payload;
 
-    // DB에서 RefreshToken을 조회
+    // DB에서 RefreshToken을 조회 // ✅ DB에서 최신 refreshToken 가져오기
     const existedRefreshToken = await refreshTokenRepository.readOneById({
-      where: {
-        userId: userId,
-      },
+      userId: +userId,
     });
 
     // ?을 붙인거는 옵셔널 체이닝  뜻은 "?" 왼쪽이 존재해? 그러면 "." 뒤로도 진행
@@ -84,25 +83,24 @@ export const requireRefreshToken = async (req, res, next) => {
       existedRefreshToken?.refreshToken &&
       bcrypt.compareSync(refreshToken, existedRefreshToken.refreshToken);
 
-    console.log(
-      "refreshToken이 유효 / isValidRefreshToken",
-      isValidRefreshToken
-    );
-
     if (!isValidRefreshToken) {
-      return res.status(HTTPS_STATUS.Unauthorized).json({
-        status: HTTPS_STATUS.Unauthorized,
+      return res.status(HTTP_STATUS.UNAUTHORIZED).json({
+        status: HTTP_STATUS.UNAUTHORIZED,
         message: MESSAGES.AUTH.COMMON.JWT.DISCARDED_TOKEN,
       });
     }
 
+    console.log("🔍 [DEBUG] existedRefreshToken:", existedRefreshToken);
+    console.log("🔍 [DEBUG] 요청된 refreshToken:", refreshToken);
+    console.log("🔍 [DEBUG] isValidRefreshToken:", isValidRefreshToken);
+
     //넘겨받은 RefreshToken과 비교
 
-    const user = await usersRepository.readOneById(userId);
+    const user = await usersRepository.readOneById({ userId });
 
     if (!user) {
-      return res.status(HTTPS_STATUS.Unauthorized).json({
-        status: HTTPS_STATUS.Unauthorized,
+      return res.status(HTTP_STATUS.UNAUTHORIZED).json({
+        status: HTTP_STATUS.UNAUTHORIZED,
         message: MESSAGES.AUTH.COMMON.JWT.NO_USER,
       });
     }

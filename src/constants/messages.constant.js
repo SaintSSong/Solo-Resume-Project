@@ -21,7 +21,7 @@ export const MESSAGES = {
       NAME: {
         REQUIRED: "이름을 입력해주세요.",
       },
-      Unauthorized: "인증 정보가 유효하지 않습니다.",
+      UNAUTHORIZED: "인증 정보가 유효하지 않습니다.",
       FORBIDDEN: "접근 권한이 없습니다.",
       JWT: {
         NO_TOKEN: "인증정보가 없습니다.",
