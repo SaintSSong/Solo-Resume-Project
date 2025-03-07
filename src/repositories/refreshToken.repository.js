@@ -9,4 +9,16 @@ export class RefreshTokenRepository {
 
     return data;
   };
+
+  // 로그아웃 시 사용
+  update = async ({ userId }) => {
+    const data = await prisma.refreshToken.update({
+      where: {
+        userId,
+      },
+      data: { refreshToken: null },
+    });
+
+    return { userId };
+  };
 }

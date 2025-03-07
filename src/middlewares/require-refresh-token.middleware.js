@@ -7,7 +7,7 @@ import { UsersRepository } from "../repositories/users.repository.js";
 import { RefreshTokenRepository } from "../repositories/refreshToken.repository.js";
 
 const usersRepository = new UsersRepository();
-const refreshRepository = new RefreshTokenRepository();
+const refreshTokenRepository = new RefreshTokenRepository();
 
 export const requireRefreshToken = async (req, res, next) => {
   try {
@@ -71,7 +71,7 @@ export const requireRefreshToken = async (req, res, next) => {
     const { userId } = payload;
 
     // DB에서 RefreshToken을 조회
-    const existedRefreshToken = await refreshRepository.readOneById({
+    const existedRefreshToken = await refreshTokenRepository.readOneById({
       where: {
         userId: userId,
       },

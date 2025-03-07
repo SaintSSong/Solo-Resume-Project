@@ -25,6 +25,8 @@ export class AuthController {
 
       const data = await authService.signIn({ email, password });
 
+      console.log("Controller-signIn", data);
+
       return res.status(HTTP_STATUS.OK).json({
         message: MESSAGES.AUTH.SIGN_IN.SUCCEED,
         data: data,
@@ -41,13 +43,33 @@ export class AuthController {
 
       const payload = { userId: user.userId };
 
-      const refreshToken = user.refreshToken;
+      // const refreshToken = user.refreshToken; refreshToken
 
-      const data = await authService.token({ payload, refreshToken });
+      const data = await authService.token({ userId: payload });
+
+      console.log("토큰 재발급", data);
 
       return res.status(HTTP_STATUS.OK).json({
         message: MESSAGES.AUTH.TOKEN.SUCCEED,
         data: data,
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  // 로그아웃
+  signOut = async (req, res, next) => {
+    try {
+      const user = req.user;
+
+      const { userId } = user;
+
+      const data = await authService.signOut({ userId });
+
+      return res.status(HTTP_STATUS.OK).json({
+        message: MESSAGES.AUTH.SIGN_OUT.SUCCEED,
+        data: { id: data.userId },
       });
     } catch (error) {
       next(error);

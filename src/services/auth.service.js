@@ -12,12 +12,14 @@ import { HttpError } from "../errors/http.error.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { UsersRepository } from "../repositories/users.repository.js";
+import { RefreshTokenRepository } from "../repositories/refreshToken.repository.js";
 
 const usersRepository = new UsersRepository();
+const refreshTokenRepository = new RefreshTokenRepository();
 
 export class AuthService {
   signUP = async ({ email, password, name }) => {
-    const existedUser = await usersRepository.readOneByEmail(email);
+    const existedUser = await usersRepository.readOneByEmail({ email });
 
     if (existedUser) {
       throw new HttpError.Conflict(MESSAGES.AUTH.COMMON.EMAIL.DUPLICATED);
@@ -29,7 +31,8 @@ export class AuthService {
   };
 
   signIn = async ({ email, password }) => {
-    const existedUser = await usersRepository.readOneByEmail(email);
+    console.log("email", email);
+    const existedUser = await usersRepository.readOneByEmail({ email });
 
     // 여기서부터는 해설에서 나온 코드
     // 코드 해석하면 && 이니까 이메일을 통해서 조회되어서 비밀번호까지 같이 검증되거나
@@ -43,30 +46,41 @@ export class AuthService {
 
     const payload = { userId: existedUser.userId };
 
-    const data = await generateAuthTokens(payload);
+    const data = await generateAuthTokens({ payload });
+
+    console.log("Service-data", data);
 
     return { data };
   };
 
   // 토큰 재발급
-  token = async ({ userId, refreshToken }) => {
-    const userToken = await usersRepository.findRefreshTokenByUserId(userId);
+  token = async ({ userId }) => {
+    console.log("token-userId", userId);
+    const userToken = await usersRepository.readOneById(userId);
+    console.log("token-userToken", userToken);
 
-    const isValid =
-      userToken && bcrypt.compareSync(refreshToken, userToken.refreshToken);
+    // const isValid =
+    //   userToken && bcrypt.compareSync(refreshToken, userToken.refreshToken);
 
-    if (!isValid) {
-      throw new HttpError.Unauthorized(MESSAGES.AUTH.COMMON.Unauthorized);
-    }
+    // if (!isValid) {
+    //   throw new HttpError.Unauthorized(MESSAGES.AUTH.COMMON.Unauthorized);
+    // }
 
-    const data = await generateAuthTokens({ userId });
+    const payload = { userId: userToken.userId };
+    const data = await generateAuthTokens({ payload });
+    return data;
+  };
+
+  // 로그 아웃
+  signOut = async ({ userId }) => {
+    const data = await refreshTokenRepository.update({ userId });
 
     return data;
   };
 }
 
 // AccessToken / RefreshToken 생성을 위한 함수
-const generateAuthTokens = async (payload) => {
+const generateAuthTokens = async ({ payload }) => {
   const userId = payload.userId;
 
   const accessToken = jwt.sign(payload, ACCESS_TOKEN_SECRET, {

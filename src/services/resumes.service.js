@@ -71,6 +71,7 @@ export class ResumesService {
   };
 
   patch = async ({ recruiterId, resumeId, status, reason }) => {
+    // 트랜잭션 시작
     const result = await prisma.$transaction(async (tx) => {
       // 이력서 정보 조회 트랜잭션
       const existedResume = await tx.resume.findResumeByIdWithTx({

@@ -23,17 +23,19 @@ export class UsersRepository {
   };
 
   // email을 통한 User 찾기
-  readOneByEmail = async (email) => {
+  readOneByEmail = async ({ email }) => {
+    console.log("readOneByEmail", email);
+
     const data = await prisma.user.findUnique({
       where: {
-        email,
+        email: email,
       },
     });
 
     return data;
   };
 
-  // AccessToken / RefreshToken 생성을 위한 함수에 필요한
+  // AccessToken / RefreshToken 생성에 필요한 함수
   tokenUpsert = async ({ userId, hashedRefreshToken }) => {
     const data = await prisma.refreshToken.upsert({
       where: { userId },
@@ -44,7 +46,8 @@ export class UsersRepository {
     return data;
   };
 
-  readOneById = async (userId) => {
+  readOneById = async ({ userId }) => {
+    console.log("readOneById-userId", userId);
     const data = await prisma.user.findUnique({
       where: { userId: +userId },
       omit: { password: true },

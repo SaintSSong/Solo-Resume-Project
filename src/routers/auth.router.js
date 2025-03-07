@@ -16,6 +16,6 @@ authRouter.post("/sign-in", signInValidator, authController.signIn);
 authRouter.post("/token", requireAccessToken, authController.token);
 
 // 로그아웃
-// authRouter.post("/sign-out", requireAccessToken, authController.signOut);
+authRouter.post("/sign-out", requireAccessToken, authController.signOut);
 
 export { authRouter };

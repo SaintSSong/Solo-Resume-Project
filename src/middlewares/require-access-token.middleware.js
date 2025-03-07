@@ -67,7 +67,7 @@ export const requireAccessToken = async (req, res, next) => {
     // 기존에는 userId가 아닌 그냥 Id라고 작성했었음.
     const { userId } = payload; // <- 이거는 안될거다 왜? 나는 userId라고 schema에 넣어놨으니
 
-    const user = await usersRepository.readOneById(userId);
+    const user = await usersRepository.readOneById({ userId });
 
     if (!user) {
       return res.status(HTTP_STATUS.Unauthorized).json({

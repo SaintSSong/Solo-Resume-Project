@@ -22,7 +22,7 @@ export class ResumesRepository {
 
     data = data.map((Resume) => {
       return {
-        id: Resume.resumeId,
+        resumeId: Resume.resumeId,
         authorName: Resume.user.name,
         title: Resume.title,
         content: Resume.content,
@@ -108,30 +108,30 @@ export class ResumesRepository {
     return data;
   };
 
-  createResumeLogWithTx = async ({
-    recruiterId,
-    resumeId,
-    oldStatus,
-    newStatus,
-    reason,
-    tx,
-  }) => {
-    const data = await tx.resumeLog.create({
-      data: { recruiterId, resumeId, oldStatus, newStatus, reason },
-    });
+  // createResumeLogWithTx = async ({
+  //   recruiterId,
+  //   resumeId,
+  //   oldStatus,
+  //   newStatus,
+  //   reason,
+  //   tx,
+  // }) => {
+  //   const data = await tx.resumeLog.create({
+  //     data: { recruiterId, resumeId, oldStatus, newStatus, reason },
+  //   });
 
-    return data;
-  };
+  //   return data;
+  // };
 
-  findResumeLogsByResumeId = async (resumeId) => {
-    let data = await prisma.resumeLog.findMany({
-      where: { resumeId: +resumeId },
-      orderBy: {
-        createdAt: "desc",
-      },
-      include: { recruiter: true },
-    });
+  // findResumeLogsByResumeId = async (resumeId) => {
+  //   let data = await prisma.resumeLog.findMany({
+  //     where: { resumeId: +resumeId },
+  //     orderBy: {
+  //       createdAt: "desc",
+  //     },
+  //     include: { recruiter: true },
+  //   });
 
-    return data;
-  };
+  //   return data;
+  // };
 }
