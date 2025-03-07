@@ -2,6 +2,7 @@ import { prisma } from "../utils/prisma.util.js";
 
 export class ResumeLogsRepository {
   // 트랜잭션 전용
+
   createResumeLogWithTx = async ({
     recruiterId,
     resumeId,
@@ -10,6 +11,7 @@ export class ResumeLogsRepository {
     reason,
     tx,
   }) => {
+    console.log("되나?????????????");
     const data = await tx.resumeLog.create({
       data: { recruiterId, resumeId, oldStatus, newStatus, reason },
     });

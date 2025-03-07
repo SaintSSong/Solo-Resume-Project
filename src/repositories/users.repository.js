@@ -47,7 +47,6 @@ export class UsersRepository {
   };
 
   readOneById = async ({ userId }) => {
-    console.log("readOneById-userId", userId);
     const data = await prisma.user.findUnique({
       where: { userId: +userId },
       omit: { password: true },

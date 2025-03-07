@@ -70,6 +70,7 @@ export class ResumesController {
       next(error);
     }
   };
+
   // 이력서 상세 조회
   readOne = async (req, res, next) => {
     try {

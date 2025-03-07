@@ -62,7 +62,7 @@ export class ResumesRepository {
     if (!data) return null;
 
     data = {
-      id: data.userId,
+      userId: data.userId,
       authorName: data.user.name,
       title: data.title,
       content: data.content,
@@ -100,6 +100,7 @@ export class ResumesRepository {
   };
 
   updateResumeStatusWithTx = async ({ resumeId, status, tx }) => {
+    console.log("updateResumeStatusWithTx 되나? ");
     const data = await tx.resume.update({
       where: { resumeId },
       data: { status },

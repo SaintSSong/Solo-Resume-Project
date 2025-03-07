@@ -74,7 +74,8 @@ export class ResumesService {
     // 트랜잭션 시작
     const result = await prisma.$transaction(async (tx) => {
       // 이력서 정보 조회 트랜잭션
-      const existedResume = await tx.resume.findResumeByIdWithTx({
+
+      const existedResume = await resumesRepository.findResumeByIdWithTx({
         resumeId: +resumeId,
         tx,
       });
@@ -85,12 +86,14 @@ export class ResumesService {
       }
 
       // 이력서 지원 상태  수정
-      const updatedResume = await tx.resume.updateResumeStatusWithTx({
+      // await tx.resumesRepository.updateResumeStatusWithTx( <- 이런 방법이 오류
+      const updatedResume = await resumesRepository.updateResumeStatusWithTx({
         resumeId: +resumeId,
         status,
         tx,
       });
 
+      console.log("되나? ");
       // 이력서 로그 수정
       // 이거 왜 createResumeLogWithTx 에서 {}를 뺐어야 했나?
       // 답 : existedResume.status, / updatedResume.status, 는 컨트롤러에서 넘어온 구조분해할당
@@ -99,24 +102,24 @@ export class ResumesService {
 
       // 이거 블로그에 남기자. GPT꺼도 같이
       // 그 외에도 다른 방법도 남기자.
-      const data = await tx.resumeLog.createResumeLogWithTx(
-        recruiterId,
-        resumeId,
-        existedResume.status,
-        updatedResume.status,
-        reason,
-        tx
-      );
-
-      // 아니면 아래와 같은 방법으로 만들어도 된다.
-      // const data = await tx.resumeLog.createResumeLogWithTx({
+      // const data = await resumeLogsRepository.createResumeLogWithTx(
       //   recruiterId,
       //   resumeId,
-      //   oldStatus: existedResume.status, // ✅ 순서와 상관없이 정확한 값 전달 가능
-      //   newStatus: updatedResume.status, // ✅ 순서와 상관없이 정확한 값 전달 가능
+      //   existedResume.status,
+      //   updatedResume.status,
       //   reason,
       //   tx
-      // });
+      // );
+
+      // 아니면 아래와 같은 방법으로 만들어도 된다.
+      const data = await resumeLogsRepository.createResumeLogWithTx({
+        recruiterId,
+        resumeId: +resumeId,
+        oldStatus: existedResume.status, // ✅ 순서와 상관없이 정확한 값 전달 가능
+        newStatus: updatedResume.status, // ✅ 순서와 상관없이 정확한 값 전달 가능
+        reason,
+        tx,
+      });
 
       // 트랜잭션의 끝
       return data;
