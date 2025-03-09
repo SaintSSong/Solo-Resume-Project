@@ -18,14 +18,14 @@ const usersRepository = new UsersRepository();
 const refreshTokenRepository = new RefreshTokenRepository();
 
 export class AuthService {
-  signUP = async ({ email, password, name }) => {
+  signUP = async ({ email, password, name, image }) => {
     const existedUser = await usersRepository.readOneByEmail({ email });
 
     if (existedUser) {
       throw new HttpError.Conflict(MESSAGES.AUTH.COMMON.EMAIL.DUPLICATED);
     }
 
-    const data = await usersRepository.create({ email, password, name });
+    const data = await usersRepository.create({ email, password, name, image });
 
     return data;
   };

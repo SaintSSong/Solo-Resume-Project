@@ -4,7 +4,7 @@ import bcrypt from "bcrypt";
 
 export class UsersRepository {
   // 유저 생성
-  create = async ({ email, password, name }) => {
+  create = async ({ email, password, name, image }) => {
     // 이거 여기 넣은 이유
     // 무조건 유저 생성시에 HASH 처리를 하게 할려고
     const hashPassword = bcrypt.hashSync(password, HASH_SALT_ROUNDS);
@@ -14,6 +14,7 @@ export class UsersRepository {
         email,
         name,
         password: hashPassword,
+        image,
       },
       // omit : password는 가져오지 않오록 하는 것
       omit: { password: true },

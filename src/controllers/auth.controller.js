@@ -9,7 +9,9 @@ export class AuthController {
     try {
       const { email, password, name } = req.body;
 
-      const data = await authService.signUP({ email, password, name });
+      const image = req.file ? req.file.location : null; // ✅ S3 업로드된 이미지 URL 가져오기
+
+      const data = await authService.signUP({ email, password, name, image });
 
       return res
         .status(HTTP_STATUS.CREATED)

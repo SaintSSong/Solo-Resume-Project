@@ -23,6 +23,8 @@ const schema = Joi.object({
   name: Joi.string().required().messages({
     "any.required": MESSAGES.AUTH.COMMON.NAME.REQUIRED,
   }),
+  // 이미지도 받을 수 있도록 추가 (S3 URL 형태로 저장되기 때문에 string 허용)
+  image: Joi.string().allow("").optional(),
 });
 
 export const signUpValidator = async (req, res, next) => {

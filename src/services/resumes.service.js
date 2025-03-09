@@ -93,7 +93,6 @@ export class ResumesService {
         tx,
       });
 
-      console.log("되나? ");
       // 이력서 로그 수정
       // 이거 왜 createResumeLogWithTx 에서 {}를 뺐어야 했나?
       // 답 : existedResume.status, / updatedResume.status, 는 컨트롤러에서 넘어온 구조분해할당
