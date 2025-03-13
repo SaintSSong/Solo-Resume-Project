@@ -74,7 +74,7 @@ jobs:
           key: ${{ secrets.EC2_PRIVATE_KEY }}
           script_stop: true
           script: |
-            set -e  # 스크립트 실행 중 오류 발생 시 즉시 종료
+            set -e  # 오류 발생 시 즉시 종료
             echo "🚀 새로운 EC2 배포 시작"
 
             # 프로젝트 폴더 이동
@@ -95,22 +95,27 @@ jobs:
             # Prisma 설정 (필요한 경우)
             yarn prisma generate
 
+            # 기존 프로세스 종료 (포트 점유 방지)
+            echo "🔄 기존 프로세스 종료 중..."
+            sudo kill -9 $(lsof -t -i:3000) || true
+
             # PM2가 설치되어 있는지 확인 후 설치
             if ! command -v pm2 &> /dev/null
             then
                 echo "⚙️ PM2 설치 중..."
-                npm install -g pm2
+               npm install -g pm2
             fi
 
             # 기존 PM2 프로세스 삭제 (실패해도 무시)
-            pm2 delete backend-server || true
+            pm2 stop all || true
+            pm2 delete all || true
 
-            # PM2 실행 (ubuntu 계정에서 실행)
+            # PM2 실행 (*** 계정에서 실행)
             echo "🔄 PM2 서버 실행 중..."
-            pm2 start src/app.js --name "backend-server"
+             pm2 start src/app.js --name "backend-server"
 
             # PM2가 SSH 세션 종료 후에도 실행되도록 설정
             pm2 save
-            pm2 startup -u ubuntu --hp /home/ubuntu
+            pm2 startup -u *** --hp /home/***
 
             echo "✅ 배포 완료!"
