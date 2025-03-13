@@ -25,19 +25,22 @@ jobs:
           echo '${{secrets.ENV}}' > .env
 
       - name: 압축하기
-        run: tar -czvf project.tar.gz .env package.json yarn.lock src prisma
+        run: |
+          tar -czvf project.tar.gz .env package.json yarn.lock src prisma
+          ls -lh project.tar.gz  # ✅ 파일이 정상적으로 생성되었는지 확인
 
-      # ✅ 기존 EC2와 새로운 EC2 모두에 파일 전송
-      - name: SCP로 EC2 (기존 서버)에 빌드된 파일 전송하기
+      # ✅ 기존 EC2에 파일 전송
+      - name: SCP로 기존 EC2에 빌드된 파일 전송하기
         uses: appleboy/scp-action@v0.1.7
         with:
-          host: ${{ secrets.EC2_HOST }} # 기존 EC2
+          host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_PRIVATE_KEY }}
           source: project.tar.gz
           target: /home/ubuntu/Solo-Resume-Project/tobe
 
-      - name: SCP로 EC2 (새로운 서버)에 빌드된 파일 전송하기
+      # ✅ 새로운 EC2에 파일 전송 (overwrite 설정 추가)
+      - name: SCP로 새로운 EC2에 빌드된 파일 전송하기
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.EC2_HOST_NEW }}
@@ -45,7 +48,7 @@ jobs:
           key: ${{ secrets.EC2_PRIVATE_KEY }}
           source: project.tar.gz
           target: /home/ubuntu/Solo-Resume-Project/tobe
-          overwrite: true # ✅ 기존 파일이 있어도 덮어쓰기
+          overwrite: true # ✅ 기존 파일 덮어쓰기 강제 적용
 
       # ✅ 기존 EC2에서 서버 실행
       - name: SSH로 기존 EC2에 접속하여 배포
@@ -66,6 +69,7 @@ jobs:
             pm2 kill
             pm2 start src/app.js --name "backend-server"
 
+      # ✅ 새로운 EC2에서 배포
       - name: SSH로 새로운 EC2에 접속하여 배포
         uses: appleboy/ssh-action@v1.0.3
         with:
@@ -83,11 +87,24 @@ jobs:
             # 기존 배포 폴더 삭제 후 새로 생성
             rm -rf /home/ubuntu/Solo-Resume-Project/current
             mkdir /home/ubuntu/Solo-Resume-Project/current
+
+            # ✅ 압축 파일이 존재하는지 확인
+            if [ ! -f "/home/ubuntu/Solo-Resume-Project/tobe/project.tar.gz" ]; then
+                echo "❌ project.tar.gz 파일이 없습니다. 배포를 중단합니다."
+                exit 1
+            fi
+
             mv /home/ubuntu/Solo-Resume-Project/tobe/project.tar.gz /home/ubuntu/Solo-Resume-Project/current/project.tar.gz
+
+            # ✅ 압축 해제 전 검증
+            ls -lh /home/ubuntu/Solo-Resume-Project/current/project.tar.gz
 
             # 새 배포 폴더로 이동 후 압축 해제
             cd /home/ubuntu/Solo-Resume-Project/current
             tar -xvf project.tar.gz
+
+            # ✅ 압축 해제 후 검증
+            ls -al
 
             # 패키지 설치
             yarn install --frozen-lockfile
@@ -103,7 +120,7 @@ jobs:
             if ! command -v pm2 &> /dev/null
             then
                 echo "⚙️ PM2 설치 중..."
-               npm install -g pm2
+                npm install -g pm2
             fi
 
             # 기존 PM2 프로세스 삭제 (실패해도 무시)
@@ -112,7 +129,7 @@ jobs:
 
             # PM2 실행 (*** 계정에서 실행)
             echo "🔄 PM2 서버 실행 중..."
-             pm2 start src/app.js --name "backend-server"
+            pm2 start src/app.js --name "backend-server"
 
             # PM2가 SSH 세션 종료 후에도 실행되도록 설정
             pm2 save
