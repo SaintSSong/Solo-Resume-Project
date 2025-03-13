@@ -1,27 +1,37 @@
 import { MESSAGES } from "../constants/messages.constant.js";
 import { HttpError } from "../errors/http.error.js";
 import { prisma } from "../utils/prisma.util.js";
-import { ResumesRepository } from "../repositories/resumes.repository.js";
-import { ResumeLogsRepository } from "../repositories/resumeLogs.repository.js";
-
-const resumesRepository = new ResumesRepository();
-const resumeLogsRepository = new ResumeLogsRepository();
 
 export class ResumesService {
+  constructor(resumesRepository, resumeLogsRepository) {
+    this.resumesRepository = resumesRepository;
+    this.resumeLogsRepository = resumeLogsRepository;
+  }
+
+  // 이력서 생성
   create = async ({ userId, title, content }) => {
-    const data = await resumesRepository.create({ userId, title, content });
+    const data = await this.resumesRepository.create({
+      userId,
+      title,
+      content,
+    });
 
     return data;
   };
 
+  // 이력서 목록 조회
   readMany = async ({ whereCondition, sort }) => {
-    const data = await resumesRepository.readMany({ whereCondition, sort });
+    const data = await this.resumesRepository.readMany({
+      whereCondition,
+      sort,
+    });
 
     return data;
   };
 
+  // 이력서 상세 조회
   readOne = async ({ whereCondition }) => {
-    let data = await resumesRepository.readOne({
+    let data = await this.resumesRepository.readOne({
       whereCondition,
     });
 
@@ -32,8 +42,9 @@ export class ResumesService {
     return data;
   };
 
+  // 이력서 수정
   update = async ({ userId, resumeId, title, content }) => {
-    const existedResume = await resumesRepository.readOne({
+    const existedResume = await this.resumesRepository.readOne({
       userId,
       resumeId: +resumeId,
     });
@@ -42,7 +53,7 @@ export class ResumesService {
       throw new HttpError.NotFound(MESSAGES.RESUMES.COMMON.NOT_FOUND);
     }
 
-    const data = await resumesRepository.update({
+    const data = await this.resumesRepository.update({
       userId,
       resumeId,
       title,
@@ -52,8 +63,9 @@ export class ResumesService {
     return data;
   };
 
+  // 이력서 삭제
   delete = async ({ userId, resumeId }) => {
-    const existedResume = await resumesRepository.readOne({
+    const existedResume = await this.resumesRepository.readOne({
       userId,
       resumeId: +resumeId,
     });
@@ -62,7 +74,7 @@ export class ResumesService {
       throw new HttpError.NotFound(MESSAGES.RESUMES.COMMON.NOT_FOUND);
     }
 
-    const data = await resumesRepository.delete({
+    const data = await this.resumesRepository.delete({
       userId,
       resumeId: +resumeId,
     });
@@ -70,12 +82,13 @@ export class ResumesService {
     return data;
   };
 
+  // 이력서 지원 상태 수정
   patch = async ({ recruiterId, resumeId, status, reason }) => {
     // 트랜잭션 시작
     const result = await prisma.$transaction(async (tx) => {
       // 이력서 정보 조회 트랜잭션
 
-      const existedResume = await resumesRepository.findResumeByIdWithTx({
+      const existedResume = await this.resumesRepository.findResumeByIdWithTx({
         resumeId: +resumeId,
         tx,
       });
@@ -87,11 +100,12 @@ export class ResumesService {
 
       // 이력서 지원 상태  수정
       // await tx.resumesRepository.updateResumeStatusWithTx( <- 이런 방법이 오류
-      const updatedResume = await resumesRepository.updateResumeStatusWithTx({
-        resumeId: +resumeId,
-        status,
-        tx,
-      });
+      const updatedResume =
+        await this.resumesRepository.updateResumeStatusWithTx({
+          resumeId: +resumeId,
+          status,
+          tx,
+        });
 
       // 이력서 로그 수정
       // 이거 왜 createResumeLogWithTx 에서 {}를 뺐어야 했나?
@@ -111,7 +125,7 @@ export class ResumesService {
       // );
 
       // 아니면 아래와 같은 방법으로 만들어도 된다.
-      const data = await resumeLogsRepository.createResumeLogWithTx({
+      const data = await this.resumeLogsRepository.createResumeLogWithTx({
         recruiterId,
         resumeId: +resumeId,
         oldStatus: existedResume.status, // ✅ 순서와 상관없이 정확한 값 전달 가능
@@ -127,9 +141,10 @@ export class ResumesService {
     return result;
   };
 
+  // 이력서 변경 로그 조회
   ResumeLogGet = async (resumeId) => {
     const findResumeLogsByResumeId =
-      await resumeLogsRepository.findResumeLogsByResumeId(resumeId);
+      await this.resumeLogsRepository.findResumeLogsByResumeId(resumeId);
 
     let data = findResumeLogsByResumeId.map((log) => {
       return {

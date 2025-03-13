@@ -1,8 +1,9 @@
-import { prisma } from "../utils/prisma.util.js";
-
 export class ResumesRepository {
+  constructor(prisma) {
+    this.prisma = prisma;
+  }
   create = async ({ userId, title, content }) => {
-    const data = await prisma.resume.create({
+    const data = await this.prisma.resume.create({
       data: { userId: +userId, title, content },
     });
 
@@ -10,7 +11,7 @@ export class ResumesRepository {
   };
 
   readMany = async ({ whereCondition, sort }) => {
-    let data = await prisma.resume.findMany({
+    let data = await this.prisma.resume.findMany({
       where: whereCondition,
       orderBy: {
         createdAt: sort,
@@ -43,7 +44,7 @@ export class ResumesRepository {
     // 만약 whereCondition이 없다면 if문을 실행해라
 
     if (!whereCondition) {
-      let data = await prisma.resume.findUnique({
+      let data = await this.prisma.resume.findUnique({
         // 안되면 resumeId : 를 id로 바꿔보자.
         where: { resumeId: +resumeId, userId },
       });
@@ -52,7 +53,7 @@ export class ResumesRepository {
     }
 
     // whereCondition이 있으면 아래 코드로 진행해라
-    let data = await prisma.resume.findUnique({
+    let data = await this.prisma.resume.findUnique({
       where: whereCondition,
       include: {
         user: true,
@@ -75,7 +76,7 @@ export class ResumesRepository {
   };
 
   update = async ({ userId, resumeId, title, content }) => {
-    const data = await prisma.resume.update({
+    const data = await this.prisma.resume.update({
       where: { userId, resumeId: +resumeId },
       data: { ...(title && { title }), ...(content && { content }) },
     });
@@ -84,7 +85,7 @@ export class ResumesRepository {
   };
 
   delete = async ({ userId, resumeId }) => {
-    const data = await prisma.resume.delete({
+    const data = await this.prisma.resume.delete({
       where: { userId, resumeId: +resumeId },
     });
 
@@ -100,7 +101,6 @@ export class ResumesRepository {
   };
 
   updateResumeStatusWithTx = async ({ resumeId, status, tx }) => {
-    console.log("updateResumeStatusWithTx 되나? ");
     const data = await tx.resume.update({
       where: { resumeId },
       data: { status },
@@ -108,31 +108,4 @@ export class ResumesRepository {
 
     return data;
   };
-
-  // createResumeLogWithTx = async ({
-  //   recruiterId,
-  //   resumeId,
-  //   oldStatus,
-  //   newStatus,
-  //   reason,
-  //   tx,
-  // }) => {
-  //   const data = await tx.resumeLog.create({
-  //     data: { recruiterId, resumeId, oldStatus, newStatus, reason },
-  //   });
-
-  //   return data;
-  // };
-
-  // findResumeLogsByResumeId = async (resumeId) => {
-  //   let data = await prisma.resumeLog.findMany({
-  //     where: { resumeId: +resumeId },
-  //     orderBy: {
-  //       createdAt: "desc",
-  //     },
-  //     include: { recruiter: true },
-  //   });
-
-  //   return data;
-  // };
 }

@@ -5,9 +5,10 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { UsersRepository } from "../repositories/users.repository.js";
 import { RefreshTokenRepository } from "../repositories/refreshToken.repository.js";
+import { prisma } from "../utils/prisma.util.js";
 
-const usersRepository = new UsersRepository();
-const refreshTokenRepository = new RefreshTokenRepository();
+const usersRepository = new UsersRepository(prisma);
+const refreshTokenRepository = new RefreshTokenRepository(prisma);
 
 export const requireRefreshToken = async (req, res, next) => {
   try {

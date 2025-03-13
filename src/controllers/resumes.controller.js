@@ -1,21 +1,22 @@
 import { HTTP_STATUS } from "../constants/http-status.constant.js";
 import { MESSAGES } from "../constants/messages.constant.js";
 import { USER_ROLE } from "../constants/user.constant.js";
-import { ResumesService } from "../services/resumes.service.js";
-
-const resumesService = new ResumesService();
 
 export class ResumesController {
+  constructor(resumesService) {
+    this.resumesService = resumesService;
+  }
+
   // 이력서 생성
   create = async (req, res, next) => {
     try {
       const { userId } = req.user;
       const { title, content } = req.body;
 
-      const data = await resumesService.create({ userId, title, content });
+      const data = await this.resumesService.create({ userId, title, content });
 
       return res.status(HTTP_STATUS.CREATED).json({
-        status: HTTP_STATUS.CREATED, //Created
+        status: HTTP_STATUS.CREATED,
         message: MESSAGES.RESUMES.CREATED.SUCCEED,
         data,
       });
@@ -31,7 +32,6 @@ export class ResumesController {
 
       const userId = user.userId;
 
-      // 내가 몰랐고 해설을 통해서 알게 된 것!
       let { sort } = req.query;
 
       // sort가 존재하면 그건 대소문자 상관없이 소문자로
@@ -59,7 +59,7 @@ export class ResumesController {
         whereCondition.userId = userId;
       }
 
-      const data = await resumesService.readMany({ whereCondition, sort });
+      const data = await this.resumesService.readMany({ whereCondition, sort });
 
       return res.status(HTTP_STATUS.OK).json({
         status: HTTP_STATUS.OK,
@@ -86,7 +86,7 @@ export class ResumesController {
         whereCondition.userId = userId;
       }
 
-      let data = await resumesService.readOne({ whereCondition });
+      let data = await this.resumesService.readOne({ whereCondition });
 
       return res.status(HTTP_STATUS.OK).json({
         status: HTTP_STATUS.OK,
@@ -105,8 +105,7 @@ export class ResumesController {
       const { resumeId } = req.params;
       const { title, content } = req.body;
 
-      console.log("controller", userId, resumeId);
-      const data = await resumesService.update({
+      const data = await this.resumesService.update({
         userId,
         resumeId,
         title,
@@ -129,7 +128,7 @@ export class ResumesController {
       const { userId } = req.user;
       const { resumeId } = req.params;
 
-      const data = await resumesService.delete({ userId, resumeId });
+      const data = await this.resumesService.delete({ userId, resumeId });
 
       return res.status(HTTP_STATUS.OK).json({
         status: HTTP_STATUS.OK,
@@ -151,7 +150,7 @@ export class ResumesController {
       const { status, reason } = req.body;
 
       // 트랜잭션
-      const data = await resumesService.patch({
+      const data = await this.resumesService.patch({
         recruiterId,
         resumeId,
         status,
@@ -173,7 +172,7 @@ export class ResumesController {
     try {
       const { resumeId } = req.params;
 
-      const data = await resumesService.ResumeLogGet(resumeId);
+      const data = await this.resumesService.ResumeLogGet(resumeId);
 
       return res.status(HTTP_STATUS.OK).json({
         status: HTTP_STATUS.OK,

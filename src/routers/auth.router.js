@@ -5,9 +5,17 @@ import { signInValidator } from "../middlewares/validators/sign-in-validator.mid
 import { requireRefreshToken } from "../middlewares/require-refresh-token.middleware.js";
 import { upload } from "../middlewares/S3-Middleware.js";
 
+import { prisma } from "../utils/prisma.util.js";
+import { UsersRepository } from "../repositories/users.repository.js";
+import { AuthService } from "../services/auth.service.js";
+import { RefreshTokenRepository } from "../repositories/refreshToken.repository.js";
+
 const authRouter = express.Router();
 
-const authController = new AuthController();
+const refreshTokenRepository = new RefreshTokenRepository(prisma);
+const usersRepository = new UsersRepository(prisma);
+const authService = new AuthService(usersRepository, refreshTokenRepository);
+const authController = new AuthController(authService);
 
 // 회원가입
 authRouter.post(

@@ -3,8 +3,9 @@ import { HTTP_STATUS } from "../constants/http-status.constant.js";
 import { MESSAGES } from "../constants/messages.constant.js";
 import { UsersRepository } from "../repositories/users.repository.js";
 import jwt from "jsonwebtoken";
+import { prisma } from "../utils/prisma.util.js";
 
-const usersRepository = new UsersRepository();
+const usersRepository = new UsersRepository(prisma);
 
 export const requireAccessToken = async (req, res, next) => {
   try {

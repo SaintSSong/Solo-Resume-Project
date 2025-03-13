@@ -1,8 +1,9 @@
-import { prisma } from "../utils/prisma.util.js";
-
 export class ResumeLogsRepository {
-  // 트랜잭션 전용
+  constructor(prisma) {
+    this.prisma = prisma;
+  }
 
+  // 트랜잭션 전용
   createResumeLogWithTx = async ({
     recruiterId,
     resumeId,
@@ -11,7 +12,6 @@ export class ResumeLogsRepository {
     reason,
     tx,
   }) => {
-    console.log("되나?????????????");
     const data = await tx.resumeLog.create({
       data: { recruiterId, resumeId, oldStatus, newStatus, reason },
     });
@@ -19,10 +19,10 @@ export class ResumeLogsRepository {
     return data;
   };
   // 트랜잭션 전용 끝
-  //
 
+  // 이력서 ID를 활용한 로그 조회
   findResumeLogsByResumeId = async (resumeId) => {
-    let data = await prisma.resumeLog.findMany({
+    let data = await this.prisma.resumeLog.findMany({
       where: { resumeId: +resumeId },
       orderBy: {
         createdAt: "desc",

@@ -1,8 +1,11 @@
-import { prisma } from "../utils/prisma.util.js";
-
 export class RefreshTokenRepository {
+  // 의존성 주입
+  constructor(prisma) {
+    this.prisma = prisma;
+  }
+
   readOneById = async ({ userId }) => {
-    const data = await prisma.refreshToken.findUnique({
+    const data = await this.prisma.refreshToken.findUnique({
       where: { userId: +userId },
     });
 
@@ -11,7 +14,7 @@ export class RefreshTokenRepository {
 
   // 로그아웃 시 사용
   update = async ({ userId }) => {
-    await prisma.refreshToken.update({
+    await this.prisma.refreshToken.update({
       where: {
         userId,
       },
@@ -22,11 +25,8 @@ export class RefreshTokenRepository {
   };
 
   deleteByUserId = async (userId) => {
-    console.log("userId22", userId);
-    const result = await prisma.refreshToken.deleteMany({
+    await this.prisma.refreshToken.deleteMany({
       where: { userId },
     });
-    console.log("deleteByUserId2 / 완료");
-    console.log(`🔍 [DEBUG] Deleted refreshTokens:`, result);
   };
 }
