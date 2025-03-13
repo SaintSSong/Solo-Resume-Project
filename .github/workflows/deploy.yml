@@ -55,7 +55,10 @@ jobs:
           script: |
             echo "🚀 기존 EC2 배포 시작"
 
-            # ✅ 3000번 포트 사용 중인 프로세스 강제 종료
+            # ✅ 현재 실행 중인 Node 프로세스 확인
+            ps aux | grep node
+
+            # ✅ 3000번 포트 점유 프로세스 강제 종료
             sudo fuser -k 3000/tcp || true
 
             # ✅ 기존 PM2 프로세스 종료 & 삭제
@@ -79,8 +82,10 @@ jobs:
             # ✅ PM2 최신 설치
             sudo npm install -g pm2
 
-            # ✅ PM2로 서버 실행
+            # ✅ PM2로 서버 실행 & 로그 확인
             pm2 start src/app.js --name "backend-server"
+            sleep 5  # 5초 대기 후 상태 확인
+            pm2 logs backend-server --lines 50
 
             # ✅ PM2 자동 실행 등록 (서버 재부팅 후에도 실행)
             pm2 save
@@ -101,7 +106,10 @@ jobs:
           script: |
             echo "🚀 새 EC2 배포 시작"
 
-            # ✅ 3000번 포트 사용 중인 프로세스 강제 종료
+            # ✅ 현재 실행 중인 Node 프로세스 확인
+            ps aux | grep node
+
+            # ✅ 3000번 포트 점유 프로세스 강제 종료
             sudo fuser -k 3000/tcp || true
 
             # ✅ 기존 PM2 프로세스 종료 & 삭제
@@ -125,8 +133,10 @@ jobs:
             # ✅ PM2 최신 설치
             sudo npm install -g pm2
 
-            # ✅ PM2로 서버 실행
+            # ✅ PM2로 서버 실행 & 로그 확인
             pm2 start src/app.js --name "backend-server"
+            sleep 5  # 5초 대기 후 상태 확인
+            pm2 logs backend-server --lines 50
 
             # ✅ PM2 자동 실행 등록 (서버 재부팅 후에도 실행)
             pm2 save
