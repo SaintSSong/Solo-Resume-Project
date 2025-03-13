@@ -25,5 +25,5 @@ app.use("/api", apiRouter);
 app.use(errorHandler);
 
 app.listen(SERVER_PORT, () => {
-  console.log(`${SERVER_PORT}번 포트로 연결 되었습니다...`);
+  console.log(`${SERVER_PORT}번 포트로 연결 되었습니다.`);
 });
