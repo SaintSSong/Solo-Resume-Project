@@ -85,20 +85,21 @@ jobs:
 
             # ✅ 기존 프로세스 종료 (포트 점유 방지)
             echo "🔄 기존 프로세스 종료 중..."
-            sudo kill -9 $(lsof -t -i:3000) || true
+            sudo fuser -k 3000/tcp || true
 
-            # ✅ PM2 설치 확인 및 실행
-            if ! command -v pm2 &> /dev/null
-            then
-                echo "⚙️ PM2 설치 중..."
-                npm install -g pm2
-            fi
+            # ✅ PM2 캐시 정리 및 재설치
+            rm -rf ~/.pm2 && pm2 kill
+            npm install -g pm2
 
-            pm2 stop all || true
-            pm2 delete all || true
+            # ✅ PM2 실행
+            echo "🔄 PM2 서버 실행 중..."
             pm2 start src/app.js --name "backend-server"
             pm2 save
             pm2 startup -u ubuntu --hp /home/ubuntu
+
+            # ✅ 서버 정상 작동 여부 확인
+            sleep 5
+            curl -I http://localhost:3000 || echo "🚨 서버 실행 실패!"
 
             echo "✅ 기존 EC2 배포 완료!"
 
@@ -139,19 +140,20 @@ jobs:
 
             # ✅ 기존 프로세스 종료 (포트 점유 방지)
             echo "🔄 기존 프로세스 종료 중..."
-            sudo kill -9 $(lsof -t -i:3000) || true
+            sudo fuser -k 3000/tcp || true
 
-            # ✅ PM2 설치 확인 및 실행
-            if ! command -v pm2 &> /dev/null
-            then
-                echo "⚙️ PM2 설치 중..."
-                npm install -g pm2
-            fi
+            # ✅ PM2 캐시 정리 및 재설치
+            rm -rf ~/.pm2 && pm2 kill
+            npm install -g pm2
 
-            pm2 stop all || true
-            pm2 delete all || true
+            # ✅ PM2 실행
+            echo "🔄 PM2 서버 실행 중..."
             pm2 start src/app.js --name "backend-server"
             pm2 save
             pm2 startup -u ubuntu --hp /home/ubuntu
+
+            # ✅ 서버 정상 작동 여부 확인
+            sleep 5
+            curl -I http://localhost:3000 || echo "🚨 서버 실행 실패!"
 
             echo "✅ 새로운 EC2 배포 완료!"
