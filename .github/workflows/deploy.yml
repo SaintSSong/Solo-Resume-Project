@@ -87,15 +87,19 @@ jobs:
             echo "🔄 기존 프로세스 종료 중..."
             sudo fuser -k 3000/tcp || true
 
-            # ✅ PM2 캐시 정리 및 재설치
-            rm -rf ~/.pm2 && pm2 kill
-            npm install -g pm2
+            # ✅ PM2 캐시 정리 및 권한 문제 해결
+            sudo rm -rf ~/.pm2 && pm2 kill
+            sudo npm install -g pm2
+
+            # ✅ PM2 시스템 서비스 재등록
+            sudo pm2 unstartup || true
+            sudo pm2 startup systemd -u ubuntu --hp /home/ubuntu
 
             # ✅ PM2 실행
             echo "🔄 PM2 서버 실행 중..."
             pm2 start src/app.js --name "backend-server"
             pm2 save
-            pm2 startup -u ubuntu --hp /home/ubuntu
+            pm2 restart backend-server
 
             # ✅ 서버 정상 작동 여부 확인
             sleep 5
@@ -142,15 +146,19 @@ jobs:
             echo "🔄 기존 프로세스 종료 중..."
             sudo fuser -k 3000/tcp || true
 
-            # ✅ PM2 캐시 정리 및 재설치
-            rm -rf ~/.pm2 && pm2 kill
-            npm install -g pm2
+            # ✅ PM2 캐시 정리 및 권한 문제 해결
+            sudo rm -rf ~/.pm2 && pm2 kill
+            sudo npm install -g pm2
+
+            # ✅ PM2 시스템 서비스 재등록
+            sudo pm2 unstartup || true
+            sudo pm2 startup systemd -u ubuntu --hp /home/ubuntu
 
             # ✅ PM2 실행
             echo "🔄 PM2 서버 실행 중..."
             pm2 start src/app.js --name "backend-server"
             pm2 save
-            pm2 startup -u ubuntu --hp /home/ubuntu
+            pm2 restart backend-server
 
             # ✅ 서버 정상 작동 여부 확인
             sleep 5
