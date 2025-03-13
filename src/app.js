@@ -16,7 +16,7 @@ app.use(express.urlencoded({ extended: true }));
 // 서버가 건강하게 살아있는지 확인하는 get 함수
 app.get("/health-check", (req, res) => {
   // throw new Error("예상치 못한 에러"); <- errorHandler 실험용 check 완료
-  return res.status(HTTP_STATUS.OK).send("서버가 건강하게 잘 살아있습니다.");
+  return res.status(HTTP_STATUS.OK).send("서버가 건강하게 잘 살아있습니다..");
 });
 
 app.use("/api", apiRouter);
