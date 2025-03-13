@@ -27,8 +27,7 @@ jobs:
       - name: 압축하기
         run: tar -czvf project.tar.gz .env package.json yarn.lock src prisma
 
-      # ✅ 기존 EC2와 새로운 EC2 모두에 파일 전송
-      - name: SCP로 EC2 (기존 서버)에 빌드된 파일 전송하기
+      - name: SCP로 EC2에 빌드된 파일 전송
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.EC2_HOST }}
@@ -36,19 +35,8 @@ jobs:
           key: ${{ secrets.EC2_PRIVATE_KEY }}
           source: project.tar.gz
           target: /home/ubuntu/Solo-Resume-Project/tobe
-          overwrite: true # ✅ 기존 파일 덮어쓰기
+          overwrite: true
 
-      - name: SCP로 EC2 (새로운 서버)에 빌드된 파일 전송하기
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.EC2_HOST_NEW }}
-          username: ${{ secrets.EC2_USERNAME }}
-          key: ${{ secrets.EC2_PRIVATE_KEY }}
-          source: project.tar.gz
-          target: /home/ubuntu/Solo-Resume-Project/tobe
-          overwrite: true # ✅ 기존 파일 덮어쓰기
-
-      # ✅ 기존 EC2에서 서버 실행
       - name: SSH로 기존 EC2에 접속하여 배포
         uses: appleboy/ssh-action@v1.0.3
         with:
@@ -95,73 +83,20 @@ jobs:
             sudo pm2 unstartup || true
             sudo pm2 startup systemd -u ubuntu --hp /home/ubuntu
 
-            # ✅ PM2 실행
+            # ✅ PM2 실행 (상태 확인 추가)
             echo "🔄 PM2 서버 실행 중..."
-            pm2 start src/app.js --name "backend-server"
+            pm2 start /home/ubuntu/Solo-Resume-Project/current/src/app.js --name "backend-server"
             pm2 save
             pm2 restart backend-server
+
+            # ✅ PM2 실행 여부 확인
+            pm2 list
+
+            # ✅ PM2 실행 로그 확인
+            pm2 logs backend-server --lines 50 || echo "🚨 PM2 로그 확인 필요!"
 
             # ✅ 서버 정상 작동 여부 확인
             sleep 5
             curl -I http://localhost:3000 || echo "🚨 서버 실행 실패!"
 
             echo "✅ 기존 EC2 배포 완료!"
-
-      # ✅ 새로운 EC2에서도 동일한 작업 수행
-      - name: SSH로 새로운 EC2에 접속하여 배포
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.EC2_HOST_NEW }}
-          username: ${{ secrets.EC2_USERNAME }}
-          key: ${{ secrets.EC2_PRIVATE_KEY }}
-          script_stop: true
-          script: |
-            set -e  # 오류 발생 시 즉시 종료
-            echo "🚀 새로운 EC2 배포 시작"
-
-            # ✅ 기존 배포 폴더 삭제 및 재생성
-            rm -rf /home/ubuntu/Solo-Resume-Project/current
-            mkdir -p /home/ubuntu/Solo-Resume-Project/current
-
-            # ✅ 배포 파일 존재 여부 확인
-            if [ ! -f "/home/ubuntu/Solo-Resume-Project/tobe/project.tar.gz" ]; then
-                echo "❌ project.tar.gz 파일이 없습니다. 배포를 중단합니다."
-                exit 1
-            fi
-
-            mv /home/ubuntu/Solo-Resume-Project/tobe/project.tar.gz /home/ubuntu/Solo-Resume-Project/current/project.tar.gz
-
-            # ✅ 압축 해제 및 검증
-            cd /home/ubuntu/Solo-Resume-Project/current
-            tar -xvf project.tar.gz
-            ls -al
-
-            # ✅ 패키지 설치
-            yarn install --frozen-lockfile
-
-            # ✅ Prisma 설정
-            yarn prisma generate
-
-            # ✅ 기존 프로세스 종료 (포트 점유 방지)
-            echo "🔄 기존 프로세스 종료 중..."
-            sudo fuser -k 3000/tcp || true
-
-            # ✅ PM2 캐시 정리 및 권한 문제 해결
-            sudo rm -rf ~/.pm2 && pm2 kill
-            sudo npm install -g pm2
-
-            # ✅ PM2 시스템 서비스 재등록
-            sudo pm2 unstartup || true
-            sudo pm2 startup systemd -u ubuntu --hp /home/ubuntu
-
-            # ✅ PM2 실행
-            echo "🔄 PM2 서버 실행 중..."
-            pm2 start src/app.js --name "backend-server"
-            pm2 save
-            pm2 restart backend-server
-
-            # ✅ 서버 정상 작동 여부 확인
-            sleep 5
-            curl -I http://localhost:3000 || echo "🚨 서버 실행 실패!"
-
-            echo "✅ 새로운 EC2 배포 완료!"
