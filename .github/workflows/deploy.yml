@@ -55,15 +55,52 @@ jobs:
           key: ${{ secrets.EC2_PRIVATE_KEY }}
           script_stop: true
           script: |
+            set -e
+            echo "🚀 기존 EC2 배포 시작"
+
+            # ✅ 3000번 포트 사용 중인 프로세스 강제 종료
+            sudo fuser -k 3000/tcp || true
+
+            # ✅ 기존 배포 폴더 정리 후 새로 생성
             rm -rf /home/ubuntu/Solo-Resume-Project/current
-            mkdir /home/ubuntu/Solo-Resume-Project/current
+            mkdir -p /home/ubuntu/Solo-Resume-Project/current
+
+            # ✅ 배포 파일 이동 및 압축 해제
             mv /home/ubuntu/Solo-Resume-Project/tobe/project.tar.gz /home/ubuntu/Solo-Resume-Project/current/project.tar.gz
             cd /home/ubuntu/Solo-Resume-Project/current
             tar -xvf project.tar.gz
+
+            # ✅ 의존성 설치 및 Prisma 클라이언트 생성
             yarn install --frozen-lockfile
-            yarn prisma generate  
+            yarn prisma generate
+
+            # ✅ PM2가 실행 중인지 확인 후 중지 및 삭제
+            if pm2 list | grep -q "backend-server"; then
+                echo "🔄 기존 PM2 프로세스 중지..."
+                pm2 stop backend-server
+                pm2 delete backend-server
+            fi
+
+            # ✅ PM2 캐시 삭제 및 재설치
             pm2 kill
+            sudo rm -rf ~/.pm2
+            sudo npm install -g pm2
+
+            # ✅ PM2로 서버 실행
+            echo "🔄 PM2 서버 실행 중..."
             pm2 start src/app.js --name "backend-server"
+
+            # ✅ PM2 자동 실행 등록 (서버 재부팅 후에도 실행되도록)
+            pm2 save
+            pm2 startup systemd -u ubuntu --hp /home/ubuntu
+
+            # ✅ 실행 상태 확인
+            pm2 list
+
+            # ✅ 서버 정상 작동 여부 확인
+            curl -I http://localhost:3000 || echo "🚨 서버 실행 실패!"
+
+            echo "✅ 기존 EC2 배포 완료!"
 
       # ✅ 새로운 EC2에서 서버 실행
       - name: SSH로 새로운 EC2에 접속하여 배포
