@@ -40,11 +40,12 @@ jobs:
       - name: SCP로 EC2 (새로운 서버)에 빌드된 파일 전송하기
         uses: appleboy/scp-action@v0.1.7
         with:
-          host: ${{ secrets.EC2_HOST_NEW }} # 새로운 EC2
+          host: ${{ secrets.EC2_HOST_NEW }}
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_PRIVATE_KEY }}
           source: project.tar.gz
           target: /home/ubuntu/Solo-Resume-Project/tobe
+          overwrite: true # ✅ 기존 파일이 있어도 덮어쓰기
 
       # ✅ 기존 EC2에서 서버 실행
       - name: SSH로 기존 EC2에 접속하여 배포
