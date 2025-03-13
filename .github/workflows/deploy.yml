@@ -24,10 +24,16 @@ jobs:
         run: |
           echo '${{secrets.ENV}}' > .env
 
-      - name: 프로젝트 압축하기
+      #   - name: 테스트 코드 실행
+      #     run: npm run test
+
+      #   - name: 빌드
+      #     run: npm run build
+
+      - name: 압축하기
         run: tar -czvf project.tar.gz .env package.json yarn.lock src prisma
 
-      - name: SCP로 기존 EC2에 빌드된 파일 전송
+      - name: SCP로 EC2에 빌드된 파일 전송하기
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.EC2_HOST }}
@@ -36,113 +42,20 @@ jobs:
           source: project.tar.gz
           target: /home/ubuntu/Solo-Resume-Project/tobe
 
-      - name: SCP로 새 EC2에 빌드된 파일 전송
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.EC2_HOST_NEW }}
-          username: ${{ secrets.EC2_USERNAME }}
-          key: ${{ secrets.EC2_PRIVATE_KEY }}
-          source: project.tar.gz
-          target: /home/ubuntu/Solo-Resume-Project/tobe
-
-      - name: 기존 EC2에서 배포 실행
+      - name: SSH로 EC2에 접속하기
         uses: appleboy/ssh-action@v1.0.3
         with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USERNAME }}
-          key: ${{ secrets.EC2_PRIVATE_KEY }}
+          host: ${{ secrets.EC2_HOST }} # EC2의 퍼블릭 IPv4 주소 = 고정 주소를 말함. 연결 된 상태의 43.202.xxx.xxx <- 이런거
+          username: ${{ secrets.EC2_USERNAME }} # EC2 접속 username = 대부분 우분투
+          key: ${{ secrets.EC2_PRIVATE_KEY }} # EC2의 key-pair 파일의 내부 텍스트
           script_stop: true
           script: |
-            echo "🚀 기존 EC2 배포 시작"
-
-            # ✅ 현재 실행 중인 Node 프로세스 확인
-            ps aux | grep node
-
-            # ✅ 3000번 포트 점유 프로세스 강제 종료
-            sudo fuser -k 3000/tcp || true
-
-            # ✅ 기존 PM2 프로세스 종료 & 삭제
-            pm2 stop all || true
-            pm2 delete all || true
-            pm2 kill || true
-
-            # ✅ 기존 배포 폴더 삭제 후 재생성
             rm -rf /home/ubuntu/Solo-Resume-Project/current
-            mkdir -p /home/ubuntu/Solo-Resume-Project/current
-
-            # ✅ 프로젝트 압축 해제
+            mkdir /home/ubuntu/Solo-Resume-Project/current
             mv /home/ubuntu/Solo-Resume-Project/tobe/project.tar.gz /home/ubuntu/Solo-Resume-Project/current/project.tar.gz
             cd /home/ubuntu/Solo-Resume-Project/current
             tar -xvf project.tar.gz
-
-            # ✅ 의존성 설치 및 Prisma 클라이언트 생성
             yarn install --frozen-lockfile
-            yarn prisma generate
-
-            # ✅ PM2 최신 설치
-            sudo npm install -g pm2
-
-            # ✅ PM2로 서버 실행 & 로그 확인
+            yarn prisma generate  
+            pm2 kill
             pm2 start src/app.js --name "backend-server"
-            sleep 5  # 5초 대기 후 상태 확인
-            pm2 logs backend-server --lines 50
-
-            # ✅ PM2 자동 실행 등록 (서버 재부팅 후에도 실행)
-            pm2 save
-            pm2 startup systemd -u ubuntu --hp /home/ubuntu
-
-            # ✅ 실행 상태 확인
-            pm2 list
-            curl -I http://localhost:3000 || echo "🚨 서버 실행 실패!"
-            echo "✅ 기존 EC2 배포 완료!"
-
-      - name: 새 EC2에서 배포 실행
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.EC2_HOST_NEW }}
-          username: ${{ secrets.EC2_USERNAME }}
-          key: ${{ secrets.EC2_PRIVATE_KEY }}
-          script_stop: true
-          script: |
-            echo "🚀 새 EC2 배포 시작"
-
-            # ✅ 현재 실행 중인 Node 프로세스 확인
-            ps aux | grep node
-
-            # ✅ 3000번 포트 점유 프로세스 강제 종료
-            sudo fuser -k 3000/tcp || true
-
-            # ✅ 기존 PM2 프로세스 종료 & 삭제
-            pm2 stop all || true
-            pm2 delete all || true
-            pm2 kill || true
-
-            # ✅ 기존 배포 폴더 삭제 후 재생성
-            rm -rf /home/ubuntu/Solo-Resume-Project/current
-            mkdir -p /home/ubuntu/Solo-Resume-Project/current
-
-            # ✅ 프로젝트 압축 해제
-            mv /home/ubuntu/Solo-Resume-Project/tobe/project.tar.gz /home/ubuntu/Solo-Resume-Project/current/project.tar.gz
-            cd /home/ubuntu/Solo-Resume-Project/current
-            tar -xvf project.tar.gz
-
-            # ✅ 의존성 설치 및 Prisma 클라이언트 생성
-            yarn install --frozen-lockfile
-            yarn prisma generate
-
-            # ✅ PM2 최신 설치
-            sudo npm install -g pm2
-
-            # ✅ PM2로 서버 실행 & 로그 확인
-            pm2 start src/app.js --name "backend-server"
-            sleep 5  # 5초 대기 후 상태 확인
-            pm2 logs backend-server --lines 50
-
-            # ✅ PM2 자동 실행 등록 (서버 재부팅 후에도 실행)
-            pm2 save
-            pm2 startup systemd -u ubuntu --hp /home/ubuntu
-
-            # ✅ 실행 상태 확인
-            pm2 list
-            curl -I http://localhost:3000 || echo "🚨 서버 실행 실패!"
-            echo "✅ 새 EC2 배포 완료!"
