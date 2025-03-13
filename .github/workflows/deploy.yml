@@ -69,76 +69,76 @@ jobs:
             pm2 kill
             pm2 start src/app.js --name "backend-server"
 
-            - name: SSH로 새로운 EC2에 접속하여 배포
-            uses: appleboy/ssh-action@v1.0.3
-            with:
-              host: ${{ secrets.EC2_HOST_NEW }}
-              username: ${{ secrets.EC2_USERNAME }}
-              key: ${{ secrets.EC2_PRIVATE_KEY }}
-              script_stop: true
-              script: |
-                set -e  # 오류 발생 시 즉시 종료
-                echo "🚀 새로운 EC2 배포 시작"
+      - name: SSH로 새로운 EC2에 접속하여 배포
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST_NEW }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_PRIVATE_KEY }}
+          script_stop: true
+          script: |
+            set -e  # 오류 발생 시 즉시 종료
+            echo "🚀 새로운 EC2 배포 시작"
 
-                # 프로젝트 폴더 이동
-                cd /home/ubuntu/Solo-Resume-Project
+            # 프로젝트 폴더 이동
+            cd /home/ubuntu/Solo-Resume-Project
 
-                # 기존 배포 폴더 삭제 후 새로 생성
-                rm -rf /home/ubuntu/Solo-Resume-Project/current
-                mkdir /home/ubuntu/Solo-Resume-Project/current
+            # 기존 배포 폴더 삭제 후 새로 생성
+            rm -rf /home/ubuntu/Solo-Resume-Project/current
+            mkdir /home/ubuntu/Solo-Resume-Project/current
 
-                # ✅ 압축 파일이 존재하는지 확인
-                if [ ! -f "/home/ubuntu/Solo-Resume-Project/tobe/project.tar.gz" ]; then
-                    echo "❌ project.tar.gz 파일이 없습니다. 배포를 중단합니다."
-                    exit 1
-                fi
+            # ✅ 압축 파일이 존재하는지 확인
+            if [ ! -f "/home/ubuntu/Solo-Resume-Project/tobe/project.tar.gz" ]; then
+              echo "❌ project.tar.gz 파일이 없습니다. 배포를 중단합니다."
+              exit 1
+            fi
 
-                mv /home/ubuntu/Solo-Resume-Project/tobe/project.tar.gz /home/ubuntu/Solo-Resume-Project/current/project.tar.gz
+            mv /home/ubuntu/Solo-Resume-Project/tobe/project.tar.gz /home/ubuntu/Solo-Resume-Project/current/project.tar.gz
 
-                # ✅ 압축 해제 전 검증
-                ls -lh /home/ubuntu/Solo-Resume-Project/current/project.tar.gz
+            # ✅ 압축 해제 전 검증
+            ls -lh /home/ubuntu/Solo-Resume-Project/current/project.tar.gz
 
-                # 새 배포 폴더로 이동 후 압축 해제
-                cd /home/ubuntu/Solo-Resume-Project/current
-                tar -xvf project.tar.gz
+            # 새 배포 폴더로 이동 후 압축 해제
+            cd /home/ubuntu/Solo-Resume-Project/current
+            tar -xvf project.tar.gz
 
-                # ✅ 압축 해제 후 검증
-                ls -al
+            # ✅ 압축 해제 후 검증
+            ls -al
 
-                # 패키지 설치
-                yarn install --frozen-lockfile
+            # 패키지 설치
+            yarn install --frozen-lockfile
 
-                # Prisma 설정 (필요한 경우)
-                yarn prisma generate
+            # Prisma 설정 (필요한 경우)
+            yarn prisma generate
 
-                # ✅ 기존 프로세스 종료 (포트 점유 방지)
-                PORT=3000
-                if command -v lsof &> /dev/null
-                then
-                    echo "🔍 lsof 사용하여 기존 프로세스 종료..."
-                    sudo kill -9 $(lsof -t -i:$PORT) || true
-                else
-                    echo "🔍 netstat 사용하여 기존 프로세스 종료..."
-                    sudo kill -9 $(netstat -tulnp 2>/dev/null | grep ':$PORT' | awk '{print $7}' | cut -d'/' -f1) || true
-                fi
+            # ✅ 기존 프로세스 종료 (포트 점유 방지)
+            PORT=3000
+            if command -v lsof &> /dev/null
+            then
+                echo "🔍 lsof 사용하여 기존 프로세스 종료..."
+                sudo kill -9 $(lsof -t -i:$PORT) || true
+            else
+                echo "🔍 netstat 사용하여 기존 프로세스 종료..."
+                sudo kill -9 $(netstat -tulnp 2>/dev/null | grep ':$PORT' | awk '{print $7}' | cut -d'/' -f1) || true
+            fi
 
-                # ✅ PM2가 설치되어 있는지 확인 후 설치
-                if ! command -v pm2 &> /dev/null
-                then
-                    echo "⚙️ PM2 설치 중..."
-                    npm install -g pm2
-                fi
+            # ✅ PM2가 설치되어 있는지 확인 후 설치
+            if ! command -v pm2 &> /dev/null
+            then
+                echo "⚙️ PM2 설치 중..."
+                npm install -g pm2
+            fi
 
-                # 기존 PM2 프로세스 삭제 (실패해도 무시)
-                pm2 stop all || true
-                pm2 delete all || true
+            # 기존 PM2 프로세스 삭제 (실패해도 무시)
+            pm2 stop all || true
+            pm2 delete all || true
 
-                # ✅ PM2 실행
-                echo "🔄 PM2 서버 실행 중..."
-                pm2 start src/app.js --name "backend-server"
+            # ✅ PM2 실행
+            echo "🔄 PM2 서버 실행 중..."
+            pm2 start src/app.js --name "backend-server"
 
-                # ✅ PM2가 SSH 세션 종료 후에도 실행되도록 설정
-                pm2 save
-                pm2 startup -u ubuntu --hp /home/ubuntu
+            # ✅ PM2가 SSH 세션 종료 후에도 실행되도록 설정
+            pm2 save
+            pm2 startup -u ubuntu --hp /home/ubuntu
 
-                echo "✅ 배포 완료!"
+            echo "✅ 배포 완료!"
