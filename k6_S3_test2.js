@@ -1,21 +1,21 @@
 import http from "k6/http";
 import { sleep, check } from "k6";
 
-// ✅ 부하 테스트 설정 (10분 동안 50명의 유저)
+// ✅ 부하 테스트 설정 (10분 동안 최대 50명 동시 실행)
 export const options = {
   stages: [{ duration: "10m", target: 50 }],
 };
 
-// ✅ 50명의 유저를 미리 정의
-const USERS = Array.from({ length: 50 }, (_, i) => ({
-  email: `user${i + 1}@example.com`,
+// ✅ S3로 회원가입한 30명의 계정 정보
+const USERS = Array.from({ length: 30 }, (_, i) => ({
+  email: `S3-test${i + 1}@example.com`,
   password: "test1234",
 }));
 
 export default function () {
   const BASE_URL = "https://api.solo-resume-project.shop/api";
 
-  // ✅ 50명 중 한 명을 랜덤하게 선택
+  // ✅ 30명 중 랜덤한 유저 선택
   const user = USERS[Math.floor(Math.random() * USERS.length)];
 
   // ✅ 로그인 요청
@@ -56,16 +56,16 @@ export default function () {
   // ✅ **내 정보 조회 (CDN 캐싱 확인 가능)**
   let myInfoRes = http.get(`${BASE_URL}/users/me`, { headers });
 
-  check(myInfoRes, {
+  let myInfoSuccess = check(myInfoRes, {
     "GET /users/me status is 200": (r) => r.status === 200,
   });
 
-  if (myInfoRes.status !== 200) {
+  if (!myInfoSuccess) {
     console.error(
       `❌ 내 정보 조회 실패! ${user.email}, 응답: ${myInfoRes.body}`
     );
   } else {
-    console.log(`✅ 내 정보 조회 성공! ${user.email}`);
+    console.log(`✅ 내 정보 조회 성공! ${user.email}, 응답: ${myInfoRes.body}`);
   }
 
   sleep(1);
