@@ -21,6 +21,9 @@ const upload = multer({
     key: function (req, file, cb) {
       cb(null, `uploads/${Date.now()}-${file.originalname}`);
     },
+    metadata: function (req, file, cb) {
+      cb(null, { "Cache-Control": "max-age=86400" }); // ✅ 추가
+    },
   }),
 });
 
