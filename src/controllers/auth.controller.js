@@ -1,6 +1,8 @@
 import { HTTP_STATUS } from "../constants/http-status.constant.js";
 import { MESSAGES } from "../constants/messages.constant.js";
 
+const CLOUDFRONT_URL = "https://d2hfyl5gwanjr5.cloudfront.net";
+
 export class AuthController {
   constructor(authService) {
     this.authService = authService;
@@ -14,7 +16,16 @@ export class AuthController {
       // const image = req.file ? req.file.location : null;
 
       // 하지만 나는 null 값 허용이 아니기 때문에 아래와 같이 작성
-      const image = req.file.location;
+      // const image = req.file.location;
+
+      // ✅ S3 URL을 CloudFront URL로 변환
+      const s3Url = req.file.location;
+      const imagePath = s3Url.replace(
+        "https://solo-resume-project-s3-static-files.s3.ap-northeast-2.amazonaws.com",
+        ""
+      );
+
+      const image = `${CLOUDFRONT_URL}${imagePath}`;
 
       const data = await this.authService.signUP({
         email,
