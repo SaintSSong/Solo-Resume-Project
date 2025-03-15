@@ -26,6 +26,15 @@ export class UsersRepository {
     return data;
   };
 
+  // // ID로 사용자 조회
+  // readById = async (userId) => {
+  //   const user = await this.prisma.user.findUnique({
+  //     where: { id: userId },
+  //   });
+
+  //   return user;
+  // };
+
   // email을 통한 User 찾기
   readOneByEmail = async ({ email }) => {
     const data = await this.prisma.user.findUnique({

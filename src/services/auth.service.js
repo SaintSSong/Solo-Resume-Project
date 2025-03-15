@@ -36,6 +36,13 @@ export class AuthService {
     return data;
   };
 
+  // 사용자 ID로 유저 정보 조회
+  getUserById = async (userId) => {
+    console.log("getUserById", userId);
+    const user = await this.usersRepository.readOneById(userId);
+    return user;
+  };
+
   // 로그인
   signIn = async ({ email, password }) => {
     const existedUser = await this.usersRepository.readOneByEmail({ email });

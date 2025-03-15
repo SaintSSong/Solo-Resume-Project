@@ -1,7 +1,6 @@
 import { HTTP_STATUS } from "../constants/http-status.constant.js";
 import { MESSAGES } from "../constants/messages.constant.js";
-
-const CLOUDFRONT_URL = "https://d2hfyl5gwanjr5.cloudfront.net";
+import { CLOUDFRONT_URL } from "../constants/env.constant.js";
 
 export class AuthController {
   constructor(authService) {
@@ -19,30 +18,46 @@ export class AuthController {
       // const image = req.file.location;
 
       // ✅ S3 URL을 CloudFront URL로 변환
-      let imageUrl = req.file.location;
+      const s3Url = req.file.location;
+      const imagePath = s3Url.replace(
+        "https://solo-resume-project-s3-static-files.s3.ap-northeast-2.amazonaws.com",
+        ""
+      );
 
-      // S3 도메인이 포함되어 있으면 CloudFront URL로 변환
-      if (
-        imageUrl.startsWith(
-          "https://solo-resume-project-s3-static-files.s3.ap-northeast-2.amazonaws.com"
-        )
-      ) {
-        imageUrl = imageUrl.replace(
-          "https://solo-resume-project-s3-static-files.s3.ap-northeast-2.amazonaws.com",
-          CLOUDFRONT_URL
-        );
-      }
+      const image = `${CLOUDFRONT_URL}${imagePath}`;
 
       const data = await this.authService.signUP({
         email,
         password,
         name,
-        image: imageUrl,
+        image,
       });
 
       return res
         .status(HTTP_STATUS.CREATED)
         .json({ message: MESSAGES.AUTH.SIGN_UP.SUCCEED, data });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  // 프로필 이미지 조회
+  profileImage = async (req, res, next) => {
+    try {
+      const userId = req.user; // 로그인한 사용자 정보 (JWT 또는 세션에서 가져옴)
+
+      const data = await this.authService.getUserById(userId); // 사용자 조회
+
+      if (!data || !data.image) {
+        return res
+          .status(HTTP_STATUS.NOT_FOUND)
+          .json({ message: "이미지가 없습니다." });
+      }
+
+      return res.status(HTTP_STATUS.OK).json({
+        message: "이미지를 성공적으로 불러왔습니다.",
+        imageUrl: data.image,
+      });
     } catch (error) {
       next(error);
     }
