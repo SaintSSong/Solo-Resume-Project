@@ -3,7 +3,7 @@ import { AuthController } from "../controllers/auth.controller.js";
 import { signUpValidator } from "../middlewares/validators/sign-up-validator.middleware.js";
 import { signInValidator } from "../middlewares/validators/sign-in-validator.middleware.js";
 import { requireRefreshToken } from "../middlewares/require-refresh-token.middleware.js";
-import { uploadSingle } from "../middlewares/S3-Middleware.js";
+import { uploadSingle, getS3Image } from "../middlewares/S3-Middleware.js";
 
 import { prisma } from "../utils/prisma.util.js";
 import { UsersRepository } from "../repositories/users.repository.js";
@@ -24,6 +24,9 @@ authRouter.post(
   signUpValidator,
   authController.signUp
 );
+
+// 2) 업로드된 이미지 다운로드 (EC2 -> S3 프록시)
+authRouter.get("/uploads/:filename", getS3Image);
 
 // 로그인
 authRouter.post("/sign-in", signInValidator, authController.signIn);

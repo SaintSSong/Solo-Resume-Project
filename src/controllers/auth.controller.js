@@ -19,19 +19,25 @@ export class AuthController {
       // const image = req.file.location;
 
       // ✅ S3 URL을 CloudFront URL로 변환
-      const s3Url = req.file.location;
-      const imagePath = s3Url.replace(
-        "https://solo-resume-project-s3-static-files.s3.ap-northeast-2.amazonaws.com",
-        ""
-      );
+      let imageUrl = req.file.location;
 
-      const image = `${CLOUDFRONT_URL}${imagePath}`;
+      // S3 도메인이 포함되어 있으면 CloudFront URL로 변환
+      if (
+        imageUrl.startsWith(
+          "https://solo-resume-project-s3-static-files.s3.ap-northeast-2.amazonaws.com"
+        )
+      ) {
+        imageUrl = imageUrl.replace(
+          "https://solo-resume-project-s3-static-files.s3.ap-northeast-2.amazonaws.com",
+          CLOUDFRONT_URL
+        );
+      }
 
       const data = await this.authService.signUP({
         email,
         password,
         name,
-        image,
+        image: imageUrl,
       });
 
       return res
