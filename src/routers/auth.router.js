@@ -3,7 +3,7 @@ import { AuthController } from "../controllers/auth.controller.js";
 import { signUpValidator } from "../middlewares/validators/sign-up-validator.middleware.js";
 import { signInValidator } from "../middlewares/validators/sign-in-validator.middleware.js";
 import { requireRefreshToken } from "../middlewares/require-refresh-token.middleware.js";
-import { upload } from "../middlewares/S3-Middleware.js";
+import { uploadSingle } from "../middlewares/S3-Middleware.js";
 
 import { prisma } from "../utils/prisma.util.js";
 import { UsersRepository } from "../repositories/users.repository.js";
@@ -20,7 +20,7 @@ const authController = new AuthController(authService);
 // 회원가입
 authRouter.post(
   "/sign-up",
-  upload.single("image"),
+  uploadSingle,
   signUpValidator,
   authController.signUp
 );
