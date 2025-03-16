@@ -2,6 +2,7 @@ export class ResumesRepository {
   constructor(prisma) {
     this.prisma = prisma;
   }
+
   create = async ({ userId, title, content }) => {
     const data = await this.prisma.resume.create({
       data: { userId: +userId, title, content },
