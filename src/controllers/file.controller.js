@@ -37,11 +37,14 @@ export class FileController {
 
       // (4) 가져온 파일의 ContentType(이미지 형식 등)을 응답 헤더에 설정해줍니다.
       //     이렇게 해야 브라우저가 "이건 이미지구나" 하고 제대로 보여줘요.
-      res.setHeader("Content-Type", data.ContentType);
+      res.setHeader(
+        "Content-Type",
+        data.ContentType || "application/octet-stream"
+      );
 
       // (5) 실제 파일 데이터를 클라이언트(사용자)에게 전송합니다.
       //     data.Body에 파일 내용(이미지)이 들어있어요.
-      res.send(data.Body);
+      data.Body.pipe(res);
     } catch (error) {
       console.error(error);
       // (6) 만약 오류가 나면, 에러 처리 미들웨어로 넘겨줘서
