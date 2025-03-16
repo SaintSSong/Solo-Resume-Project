@@ -24,7 +24,7 @@ export class AuthController {
         ""
       );
 
-      const image = `${CLOUDFRONT_URL}${imagePath}`;
+      const image = `${CLOUDFRONT_URL}/api${imagePath}`;
 
       const data = await this.authService.signUP({
         email,
