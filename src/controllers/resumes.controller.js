@@ -2,6 +2,9 @@ import { HTTP_STATUS } from "../constants/http-status.constant.js";
 import { MESSAGES } from "../constants/messages.constant.js";
 import { USER_ROLE } from "../constants/user.constant.js";
 
+// 레디스 추가
+import redis from "../utils/redis.util.js";
+
 export class ResumesController {
   constructor(resumesService) {
     this.resumesService = resumesService;
@@ -92,6 +95,17 @@ export class ResumesController {
       // 몇 번째 데이터부터 가져올지 offset 계산
       const offset = (page - 1) * limit;
 
+      // 🔑 Redis 캐시 키 구성
+      const cacheKey = `resumes:admin:page=${page}:limit=${limit}:sort=${sort}`;
+
+      // 1. Redis에서 먼저 가져오기
+      const cached = await redis.get(cacheKey);
+      if (cached) {
+        console.log("📦 Redis 캐시로 응답");
+        return res.status(200).json(JSON.parse(cached));
+      }
+
+      // 2. DB에서 조회
       // 서비스로 offset, limit, sort 전달
       const { resumes, totalCount } = await this.resumesService.readALL({
         sort,
@@ -99,19 +113,26 @@ export class ResumesController {
         limit,
       });
 
-      return res.status(HTTP_STATUS.OK).json({
+      // ✅ 3. 응답 데이터 구조 구성
+      const responseData = {
         status: HTTP_STATUS.OK,
         message: MESSAGES.RESUMES.READ_LIST.SUCCEED,
         data: {
-          resumes, // 실제 이력서 목록
+          resumes,
           pagination: {
-            totalCount, // 전체 이력서 개수
-            page, // 현재 페이지 번호
-            limit, // 한 페이지당 보여주는 개수
-            totalPages: Math.ceil(totalCount / limit), // 전체 페이지 수
+            totalCount,
+            page,
+            limit,
+            totalPages: Math.ceil(totalCount / limit),
           },
         },
-      });
+      };
+
+      // ✅ 4. Redis에 캐시 저장 (TTL 300초 = 5분)
+      await redis.set(cacheKey, JSON.stringify(responseData), "EX");
+
+      // ✅ 5. 응답 반환
+      return res.status(HTTP_STATUS.OK).json(responseData);
     } catch (error) {
       next(error);
     }

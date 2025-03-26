@@ -1,6 +1,7 @@
 import { MESSAGES } from "../constants/messages.constant.js";
 import { HttpError } from "../errors/http.error.js";
 import { prisma } from "../utils/prisma.util.js";
+import { invalidateResumesCache } from "../utils/redis.util.js";
 
 export class ResumesService {
   constructor(resumesRepository, resumeLogsRepository) {
@@ -31,6 +32,7 @@ export class ResumesService {
 
   // 관리자 전용 이력서 전체 목록 조회
   readALL = async ({ sort, offset, limit }) => {
+    console.log("📡 서비스 진입");
     return await prisma.$transaction(async (tx) => {
       const resumesRaw = await this.resumesRepository.findManyWithPagination({
         sort,
@@ -75,16 +77,21 @@ export class ResumesService {
       resumeId: +resumeId,
     });
 
+    // 이력서가 존재하지 않으면 예외 처리
     if (!existedResume) {
       throw new HttpError.NotFound(MESSAGES.RESUMES.COMMON.NOT_FOUND);
     }
 
+    // 이력서 내용 수정
     const data = await this.resumesRepository.update({
       userId,
       resumeId,
       title,
       content,
     });
+
+    // Redis 캐시 무효화 (관리자 이력서 목록 캐시 삭제)
+    await invalidateResumesCache();
 
     return data;
   };
@@ -104,6 +111,9 @@ export class ResumesService {
       userId,
       resumeId: +resumeId,
     });
+
+    // Redis 캐시 무효화 (관리자 이력서 목록 캐시 삭제)
+    await invalidateResumesCache();
 
     return data;
   };
@@ -163,6 +173,9 @@ export class ResumesService {
       // 트랜잭션의 끝
       return data;
     });
+
+    // Redis 캐시 무효화 (관리자 이력서 목록 캐시 삭제)
+    await invalidateResumesCache();
 
     return result;
   };
