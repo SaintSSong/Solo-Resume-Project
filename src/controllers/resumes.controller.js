@@ -71,6 +71,52 @@ export class ResumesController {
     }
   };
 
+  // 관리자용 이력서 전체 목록 조회
+  readALL = async (req, res, next) => {
+    try {
+      // query에서 sort, page, limit 파라미터 추출 (기본값 지정)
+      let { sort, page = 1, limit = 10 } = req.query;
+
+      // sort가 존재하면 그건 대소문자 상관없이 소문자로
+      sort = sort?.toLowerCase();
+
+      // sort가 (req.query가 "ASC","DESC"도 아니면) 둘다 아니면 기본 DESC로
+      if (sort !== "asc" && sort !== "desc") {
+        sort = "desc";
+      }
+
+      // page, limit을 숫자로 변환
+      page = parseInt(page);
+      limit = parseInt(limit);
+
+      // 몇 번째 데이터부터 가져올지 offset 계산
+      const offset = (page - 1) * limit;
+
+      // 서비스로 offset, limit, sort 전달
+      const { resumes, totalCount } = await this.resumesService.readALL({
+        sort,
+        offset,
+        limit,
+      });
+
+      return res.status(HTTP_STATUS.OK).json({
+        status: HTTP_STATUS.OK,
+        message: MESSAGES.RESUMES.READ_LIST.SUCCEED,
+        data: {
+          resumes, // 실제 이력서 목록
+          pagination: {
+            totalCount, // 전체 이력서 개수
+            page, // 현재 페이지 번호
+            limit, // 한 페이지당 보여주는 개수
+            totalPages: Math.ceil(totalCount / limit), // 전체 페이지 수
+          },
+        },
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
+
   // 이력서 상세 조회
   readOne = async (req, res, next) => {
     try {

@@ -37,6 +37,27 @@ export class ResumesRepository {
     return data;
   };
 
+  // 관리자 전용 전체 조회
+  //============================================================
+  // pagination된 이력서 목록 조회
+  findManyWithPagination = async ({ sort, offset, limit, tx }) => {
+    return await tx.resume.findMany({
+      skip: offset,
+      take: limit,
+      orderBy: {
+        createdAt: sort === "asc" ? "asc" : "desc",
+      },
+      include: {
+        user: true,
+      },
+    });
+  };
+
+  countAll = async ({ tx }) => {
+    return await tx.resume.count();
+  };
+  //============================================================
+
   // resumeService.update에서도 사용하기 위해서
   // 하나의 함수를 둘 다 쓰게하려고 includeAuthor = false를 넣는다.
   // 디폴트가 false여서 "service의 readOne"처럼 명시적으로 true하지 않으면

@@ -32,6 +32,14 @@ resumeRouter.post(
 // 이력서 목록 조회
 resumeRouter.get("/", requireAccessToken, resumesController.readMany);
 
+// 관리자용 이력서 전체 목록 조회
+resumeRouter.get(
+  "/ALL",
+  requireRoles([USER_ROLE.RECRUITER]),
+  requireAccessToken,
+  resumesController.readALL
+);
+
 // 이력서 상세 조회
 resumeRouter.get("/:resumeId", requireAccessToken, resumesController.readOne);
 

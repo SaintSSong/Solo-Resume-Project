@@ -29,6 +29,32 @@ export class ResumesService {
     return data;
   };
 
+  // 관리자 전용 이력서 전체 목록 조회
+  readALL = async ({ sort, offset, limit }) => {
+    return await prisma.$transaction(async (tx) => {
+      const resumesRaw = await this.resumesRepository.findManyWithPagination({
+        sort,
+        offset,
+        limit,
+        tx,
+      });
+
+      const totalCount = await this.resumesRepository.countAll({ tx });
+
+      const resumes = resumesRaw.map((resume) => ({
+        resumeId: resume.resumeId,
+        authorName: resume.user.name,
+        title: resume.title,
+        content: resume.content,
+        status: resume.status,
+        createdAt: resume.createdAt,
+        updatedAt: resume.updatedAt,
+      }));
+
+      return { resumes, totalCount };
+    });
+  };
+
   // 이력서 상세 조회
   readOne = async ({ whereCondition }) => {
     let data = await this.resumesRepository.readOne({
