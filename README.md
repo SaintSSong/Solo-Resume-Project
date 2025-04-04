@@ -1,4 +1,4 @@
-# [웹서버]  <br> "Solo-Resume-Project"
+# <br> "Solo-Resume-Project"
 
 ## 프로젝트 소개
 - 서비스명 : Solo-Resume-Project
