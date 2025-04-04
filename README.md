@@ -12,7 +12,7 @@
 <summary>상세보기</summary>
 
 ```bash
-$ git clone https://github.com/SaintSSong/Solo-Resume-Project.git
+$ [git clone https://github.com/SaintSSong/Solo-Resume-Project.git](https://github.com/SaintSSong/Solo-Resume-Project.git)
 $ yarn install
 ```
 </details>
