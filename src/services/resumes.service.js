@@ -124,7 +124,7 @@ export class ResumesService {
   patch = async ({ recruiterId, resumeId, status, reason }) => {
     const lockKey = `lock:resume:${resumeId}`; // 🔐 락 키 구성 (resume 단위)
     const lockToken = uuidv4(); // 🔐 락 소유자 식별용 토큰
-    const lockTtl = 30; // ⏳ TTL 5초
+    const lockTtl = 5; // ⏳ TTL 5초 / 실험 시에만 30초로 변경
 
     // 1️⃣ 락 시도 (기존에 락이 없을 때만 생성)
     const isLocked = await redis.set(lockKey, lockToken, "NX", "EX", lockTtl);
