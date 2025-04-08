@@ -2,6 +2,8 @@ import { MESSAGES } from "../constants/messages.constant.js";
 import { HttpError } from "../errors/http.error.js";
 import { prisma } from "../utils/prisma.util.js";
 import { invalidateResumesCache } from "../utils/redis.util.js";
+import { v4 as uuidv4 } from "uuid";
+import redis from "../utils/redis.util.js";
 
 export class ResumesService {
   constructor(resumesRepository, resumeLogsRepository) {
@@ -120,64 +122,93 @@ export class ResumesService {
 
   // 이력서 지원 상태 수정
   patch = async ({ recruiterId, resumeId, status, reason }) => {
-    // 트랜잭션 시작
-    const result = await prisma.$transaction(async (tx) => {
-      // 이력서 정보 조회 트랜잭션
+    const lockKey = `lock:resume:${resumeId}`; // 🔐 락 키 구성 (resume 단위)
+    const lockToken = uuidv4(); // 🔐 락 소유자 식별용 토큰
+    const lockTtl = 30; // ⏳ TTL 5초
 
-      const existedResume = await this.resumesRepository.findResumeByIdWithTx({
-        resumeId: +resumeId,
-        tx,
-      });
+    // 1️⃣ 락 시도 (기존에 락이 없을 때만 생성)
+    const isLocked = await redis.set(lockKey, lockToken, "NX", "EX", lockTtl);
+    if (!isLocked) {
+      throw new HttpError.Conflict("다른 사용자가 이력서를 수정 중입니다.");
+    }
+    try {
+      // 트랜잭션 시작
+      const result = await prisma.$transaction(
+        async (tx) => {
+          // 이력서 정보 조회 트랜잭션
 
-      // 이력서 정보가 없는 경우
-      if (!existedResume) {
-        throw new HttpError.NotFound(MESSAGES.RESUMES.COMMON.NOT_FOUND);
+          // 동시성 문제 체크하기 위한 고의 10초 딜레이
+          // await new Promise((resolve) => setTimeout(resolve, 10000));
+
+          const existedResume =
+            await this.resumesRepository.findResumeByIdWithTx({
+              resumeId: +resumeId,
+              tx,
+            });
+
+          // 이력서 정보가 없는 경우
+          if (!existedResume) {
+            throw new HttpError.NotFound(MESSAGES.RESUMES.COMMON.NOT_FOUND);
+          }
+
+          // 이력서 지원 상태  수정
+          // await tx.resumesRepository.updateResumeStatusWithTx( <- 이런 방법이 오류
+          const updatedResume =
+            await this.resumesRepository.updateResumeStatusWithTx({
+              resumeId: +resumeId,
+              status,
+              tx,
+            });
+
+          // 이력서 로그 수정
+          // 이거 왜 createResumeLogWithTx 에서 {}를 뺐어야 했나?
+          // 답 : existedResume.status, / updatedResume.status, 는 컨트롤러에서 넘어온 구조분해할당
+          // 즉 {resumeId : 1} 이런 형태가 아니라 트랜잭션 내부에서 생성되는 값 즉 "1" 이런 형태여서 {}가 붙으면 안됨
+          // 나머지는 전부 {a:b} 형태인데 중간에 섞여있기 때문에 그럼
+
+          // 이거 블로그에 남기자. GPT꺼도 같이
+          // 그 외에도 다른 방법도 남기자.
+          // const data = await resumeLogsRepository.createResumeLogWithTx(
+          //   recruiterId,
+          //   resumeId,
+          //   existedResume.status,
+          //   updatedResume.status,
+          //   reason,
+          //   tx
+          // );
+
+          // 아니면 아래와 같은 방법으로 만들어도 된다.
+          const data = await this.resumeLogsRepository.createResumeLogWithTx({
+            recruiterId,
+            resumeId: +resumeId,
+            oldStatus: existedResume.status, // ✅ 순서와 상관없이 정확한 값 전달 가능
+            newStatus: updatedResume.status, // ✅ 순서와 상관없이 정확한 값 전달 가능
+            reason,
+            tx,
+          });
+
+          // 트랜잭션의 끝
+          return data;
+        }
+        // 동시성 문제 체크하기 위한 코드드
+        // {
+        //   // 여기에 timeout, maxWait 같은 옵션 지정 가능
+        //   timeout: 20000, // 20초까지 허용
+        //   // maxWait: 10000,  // (선택) 트랜잭션 대기 시간
+        // }
+      );
+
+      // Redis 캐시 무효화 (관리자 이력서 목록 캐시 삭제)
+      await invalidateResumesCache();
+
+      return result;
+    } finally {
+      // 4️⃣ 락 해제 (내가 건 락일 때만 삭제)
+      const currentToken = await redis.get(lockKey);
+      if (currentToken === lockToken) {
+        await redis.del(lockKey);
       }
-
-      // 이력서 지원 상태  수정
-      // await tx.resumesRepository.updateResumeStatusWithTx( <- 이런 방법이 오류
-      const updatedResume =
-        await this.resumesRepository.updateResumeStatusWithTx({
-          resumeId: +resumeId,
-          status,
-          tx,
-        });
-
-      // 이력서 로그 수정
-      // 이거 왜 createResumeLogWithTx 에서 {}를 뺐어야 했나?
-      // 답 : existedResume.status, / updatedResume.status, 는 컨트롤러에서 넘어온 구조분해할당
-      // 즉 {resumeId : 1} 이런 형태가 아니라 트랜잭션 내부에서 생성되는 값 즉 "1" 이런 형태여서 {}가 붙으면 안됨
-      // 나머지는 전부 {a:b} 형태인데 중간에 섞여있기 때문에 그럼
-
-      // 이거 블로그에 남기자. GPT꺼도 같이
-      // 그 외에도 다른 방법도 남기자.
-      // const data = await resumeLogsRepository.createResumeLogWithTx(
-      //   recruiterId,
-      //   resumeId,
-      //   existedResume.status,
-      //   updatedResume.status,
-      //   reason,
-      //   tx
-      // );
-
-      // 아니면 아래와 같은 방법으로 만들어도 된다.
-      const data = await this.resumeLogsRepository.createResumeLogWithTx({
-        recruiterId,
-        resumeId: +resumeId,
-        oldStatus: existedResume.status, // ✅ 순서와 상관없이 정확한 값 전달 가능
-        newStatus: updatedResume.status, // ✅ 순서와 상관없이 정확한 값 전달 가능
-        reason,
-        tx,
-      });
-
-      // 트랜잭션의 끝
-      return data;
-    });
-
-    // Redis 캐시 무효화 (관리자 이력서 목록 캐시 삭제)
-    await invalidateResumesCache();
-
-    return result;
+    }
   };
 
   // 이력서 변경 로그 조회

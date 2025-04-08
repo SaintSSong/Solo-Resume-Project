@@ -129,7 +129,7 @@ export class ResumesController {
       };
 
       // ✅ 4. Redis에 캐시 저장 (TTL 300초 = 5분)
-      await redis.set(cacheKey, JSON.stringify(responseData), "EX");
+      await redis.set(cacheKey, JSON.stringify(responseData), "EX", 300);
 
       // ✅ 5. 응답 반환
       return res.status(HTTP_STATUS.OK).json(responseData);
